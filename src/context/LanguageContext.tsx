@@ -16,6 +16,7 @@ function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
     ...parsed,
     lunchBreakMinutes: parsed.lunchBreakMinutes ?? 60,
     eveningBreakMinutes: parsed.eveningBreakMinutes ?? 0,
+    morningBreakMinutes: parsed.morningBreakMinutes ?? 60,
     normalArrival: { ...DEFAULT_ARRIVAL_CONFIGS.normal, ...parsed.normalArrival },
     earlyArrival: { ...DEFAULT_ARRIVAL_CONFIGS.early, ...parsed.earlyArrival },
     lateArrival: { ...DEFAULT_ARRIVAL_CONFIGS.late, ...parsed.lateArrival },
@@ -28,6 +29,7 @@ interface LanguageContextType {
   language: Language;
   lunchBreakMinutes: number;
   eveningBreakMinutes: number;
+  morningBreakMinutes: number;
   normalArrival: ArrivalTypeConfig;
   earlyArrival: ArrivalTypeConfig;
   lateArrival: ArrivalTypeConfig;
@@ -36,7 +38,11 @@ interface LanguageContextType {
   setLanguage: (lang: Language) => Promise<void>;
   setLunchBreakMinutes: (minutes: number) => Promise<void>;
   setEveningBreakMinutes: (minutes: number) => Promise<void>;
-  setBreakTimes: (lunchBreakMinutes: number, eveningBreakMinutes: number) => Promise<void>;
+  setBreakTimes: (
+    morningBreakMinutes: number,
+    lunchBreakMinutes: number,
+    eveningBreakMinutes: number
+  ) => Promise<void>;
   setArrivalSettings: (
     normal: ArrivalTypeConfig,
     early: ArrivalTypeConfig,
@@ -96,9 +102,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setBreakTimes = useCallback(
-    async (lunchBreakMinutes: number, eveningBreakMinutes: number) => {
+    async (morningBreakMinutes: number, lunchBreakMinutes: number, eveningBreakMinutes: number) => {
       setSettings((prev) => {
-        const next = { ...prev, lunchBreakMinutes, eveningBreakMinutes };
+        const next = { ...prev, morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes };
         AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
         return next;
       });
@@ -142,6 +148,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         language: settings.language,
         lunchBreakMinutes: settings.lunchBreakMinutes,
         eveningBreakMinutes: settings.eveningBreakMinutes ?? 0,
+        morningBreakMinutes: settings.morningBreakMinutes ?? 60,
         normalArrival: settings.normalArrival,
         earlyArrival: settings.earlyArrival,
         lateArrival: settings.lateArrival,

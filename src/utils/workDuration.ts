@@ -1,3 +1,5 @@
+import { WorkArrivalType } from '../types';
+
 export function normalizeTimeString(time: string): string | null {
   const trimmed = time?.trim() ?? '';
   if (!trimmed || trimmed === '--:--' || !trimmed.includes(':')) return null;
@@ -25,6 +27,33 @@ export function isValidCommutePair(clockIn: string, clockOut: string): boolean {
   return inMin !== null && outMin !== null && outMin > inMin;
 }
 
+export const MORNING_BREAK_CLOCK_IN_THRESHOLD_MINUTES = 8 * 60;
+
+export type BreakSettings = {
+  morningBreakMinutes: number;
+  lunchBreakMinutes: number;
+  eveningBreakMinutes: number;
+};
+
+export function calcBreakMinutesForEntry(
+  clockIn: string,
+  arrivalType: WorkArrivalType | undefined,
+  settings: BreakSettings
+): number {
+  let total = settings.eveningBreakMinutes;
+
+  const inMin = timeToMinutes(clockIn);
+  if (inMin !== null && inMin < MORNING_BREAK_CLOCK_IN_THRESHOLD_MINUTES) {
+    total += settings.morningBreakMinutes;
+  }
+
+  if (arrivalType !== 'vacation') {
+    total += settings.lunchBreakMinutes;
+  }
+
+  return total;
+}
+
 export function calcWorkMinutes(
   clockIn: string,
   clockOut: string,
@@ -46,17 +75,20 @@ export function formatWorkHoursDecimal(workMinutes: number | null): string | nul
 export function getWorkHoursParenthetical(
   clockIn: string,
   clockOut: string,
-  breakMinutes = 0
+  breakSettings: BreakSettings,
+  arrivalType?: WorkArrivalType
 ): string {
+  const breakMinutes = calcBreakMinutesForEntry(clockIn, arrivalType, breakSettings);
   const decimal = formatWorkHoursDecimal(calcWorkMinutes(clockIn, clockOut, breakMinutes));
   return decimal ? ` (${decimal})` : '';
 }
 
 export function sumWorkMinutes(
-  entries: { clockIn: string; clockOut: string }[],
-  breakMinutes = 0
+  entries: { clockIn: string; clockOut: string; arrivalType?: WorkArrivalType }[],
+  breakSettings: BreakSettings
 ): number {
-  return entries.reduce((sum, { clockIn, clockOut }) => {
+  return entries.reduce((sum, { clockIn, clockOut, arrivalType }) => {
+    const breakMinutes = calcBreakMinutesForEntry(clockIn, arrivalType, breakSettings);
     const mins = calcWorkMinutes(clockIn, clockOut, breakMinutes);
     return sum + (mins ?? 0);
   }, 0);

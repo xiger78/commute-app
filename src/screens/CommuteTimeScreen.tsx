@@ -200,6 +200,7 @@ export function CommuteTimeScreen() {
     language,
     lunchBreakMinutes,
     eveningBreakMinutes,
+    morningBreakMinutes,
     normalArrival,
     earlyArrival,
     lateArrival,
@@ -218,7 +219,10 @@ export function CommuteTimeScreen() {
     }),
     [normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival]
   );
-  const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
+  const breakSettings = useMemo(
+    () => ({ morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes }),
+    [morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes]
+  );
   const bulkApplyDays = useMemo(
     () => getBulkApplyDateKeys(year, month),
     [year, month]
@@ -368,19 +372,20 @@ export function CommuteTimeScreen() {
       }
     });
 
-    const timeEntries: { clockIn: string; clockOut: string }[] = [];
+    const timeEntries: { clockIn: string; clockOut: string; arrivalType?: WorkArrivalType }[] = [];
     const savedList: PreviewItem[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
+      const arrivalType = getArrivalTypeForDate(dateKey, data.workDays, data.workDayTypes);
       const times = merged[dateKey] ?? getCommuteTimeForDate(dateKey);
       const memo = mergedMemos[dateKey] ?? '';
       if (!times?.clockIn && !times?.clockOut && !memo) return null;
       const clockIn = times.clockIn ?? '--:--';
       const clockOut = times.clockOut ?? '--:--';
       if (isValidCommutePair(clockIn, clockOut)) {
-        timeEntries.push({ clockIn, clockOut });
+        timeEntries.push({ clockIn, clockOut, arrivalType });
       }
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
-      const workHours = getWorkHoursParenthetical(clockIn, clockOut, totalBreakMinutes);
+      const workHours = getWorkHoursParenthetical(clockIn, clockOut, breakSettings, arrivalType);
       const memoSuffix = memo ? ` ${tr('commuteMemoPreview', { memo })}` : '';
       return {
         dateKey,
@@ -388,7 +393,7 @@ export function CommuteTimeScreen() {
       };
     }).filter(Boolean) as PreviewItem[];
 
-    const totalMinutes = sumWorkMinutes(timeEntries, totalBreakMinutes);
+    const totalMinutes = sumWorkMinutes(timeEntries, breakSettings);
     await setCommuteTimes(merged);
     await setDayMemos(mergedMemos);
     setPreview(savedList);

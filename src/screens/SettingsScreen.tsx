@@ -134,6 +134,7 @@ export function SettingsScreen() {
     language,
     lunchBreakMinutes,
     eveningBreakMinutes,
+    morningBreakMinutes,
     setLanguage,
     setBreakTimes,
     setArrivalSettings,
@@ -176,6 +177,10 @@ export function SettingsScreen() {
   const toHourStr = (minutes: number) => String(Math.floor(minutes / 60)).padStart(2, '0');
   const toMinuteStr = (minutes: number) => String(minutes % 60).padStart(2, '0');
 
+  const [draftMorningHour, setDraftMorningHour] = useState(() => toHourStr(morningBreakMinutes));
+  const [draftMorningMinute, setDraftMorningMinute] = useState(() =>
+    toMinuteStr(morningBreakMinutes)
+  );
   const [draftLunchHour, setDraftLunchHour] = useState(() => toHourStr(lunchBreakMinutes));
   const [draftLunchMinute, setDraftLunchMinute] = useState(() => toMinuteStr(lunchBreakMinutes));
   const [draftEveningHour, setDraftEveningHour] = useState(() => toHourStr(eveningBreakMinutes));
@@ -184,9 +189,15 @@ export function SettingsScreen() {
   );
   const [savingBreakTimes, setSavingBreakTimes] = useState(false);
 
-  const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
+  const breakSettings = {
+    morningBreakMinutes,
+    lunchBreakMinutes,
+    eveningBreakMinutes,
+  };
 
   const syncBreakDraft = () => {
+    setDraftMorningHour(toHourStr(morningBreakMinutes));
+    setDraftMorningMinute(toMinuteStr(morningBreakMinutes));
     setDraftLunchHour(toHourStr(lunchBreakMinutes));
     setDraftLunchMinute(toMinuteStr(lunchBreakMinutes));
     setDraftEveningHour(toHourStr(eveningBreakMinutes));
@@ -271,9 +282,12 @@ export function SettingsScreen() {
   const handleSaveBreakTimes = async () => {
     setSavingBreakTimes(true);
     try {
+      const morning = parseDraftMinutes(draftMorningHour, draftMorningMinute);
       const lunch = parseDraftMinutes(draftLunchHour, draftLunchMinute);
       const evening = parseDraftMinutes(draftEveningHour, draftEveningMinute);
-      await setBreakTimes(lunch, evening);
+      await setBreakTimes(morning, lunch, evening);
+      setDraftMorningHour(toHourStr(morning));
+      setDraftMorningMinute(toMinuteStr(morning));
       setDraftLunchHour(toHourStr(lunch));
       setDraftLunchMinute(toMinuteStr(lunch));
       setDraftEveningHour(toHourStr(evening));
@@ -292,7 +306,14 @@ export function SettingsScreen() {
         reportYear,
         reportMonth,
         language,
-        totalBreakMinutes
+        breakSettings,
+        {
+          normal: normalArrival,
+          early: earlyArrival,
+          late: lateArrival,
+          remote: remoteArrival,
+          vacation: vacationArrival,
+        }
       );
       setLastCsvUri(uri);
       Alert.alert(tr('alertDone'), tr('alertReportDone'));
@@ -443,6 +464,14 @@ export function SettingsScreen() {
         expanded={expanded.attendance}
         onToggle={() => toggle('attendance')}
       >
+        <Text style={styles.label}>{tr('settingsMorning')}</Text>
+        <TimeInput
+          label=""
+          hour={draftMorningHour}
+          minute={draftMorningMinute}
+          onHourChange={setDraftMorningHour}
+          onMinuteChange={setDraftMorningMinute}
+        />
         <Text style={styles.label}>{tr('settingsLunch')}</Text>
         <TimeInput
           label=""

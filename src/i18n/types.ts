@@ -19,6 +19,7 @@ export interface AppSettings {
   language: Language;
   lunchBreakMinutes: number;
   eveningBreakMinutes: number;
+  morningBreakMinutes: number;
   normalArrival: ArrivalTypeConfig;
   earlyArrival: ArrivalTypeConfig;
   lateArrival: ArrivalTypeConfig;
@@ -30,6 +31,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   language: 'ja',
   lunchBreakMinutes: 60,
   eveningBreakMinutes: 0,
+  morningBreakMinutes: 60,
   normalArrival: DEFAULT_ARRIVAL_CONFIGS.normal,
   earlyArrival: DEFAULT_ARRIVAL_CONFIGS.early,
   lateArrival: DEFAULT_ARRIVAL_CONFIGS.late,

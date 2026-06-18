@@ -17,7 +17,7 @@ import {
 } from '../utils/workDuration';
 import { getWeekdays } from '../i18n/translations';
 import { ArrivalTypeConfig, WorkArrivalType } from '../types';
-import { getCommuteRowColors, getEffectiveCommuteTimes } from '../utils/arrivalSettings';
+import { getCommuteRowColors, getArrivalTypeForDate, getEffectiveCommuteTimes } from '../utils/arrivalSettings';
 
 type HistoryItem = {
   dateKey: string;
@@ -36,6 +36,7 @@ export function AttendanceHistoryScreen() {
     language,
     lunchBreakMinutes,
     eveningBreakMinutes,
+    morningBreakMinutes,
     normalArrival,
     earlyArrival,
     lateArrival,
@@ -43,7 +44,10 @@ export function AttendanceHistoryScreen() {
     vacationArrival,
     tr,
   } = useLanguage();
-  const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
+  const breakSettings = useMemo(
+    () => ({ morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes }),
+    [morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes]
+  );
   const weekdays = getWeekdays(language);
 
   const arrivalConfigs = useMemo<Record<WorkArrivalType, ArrivalTypeConfig>>(
@@ -59,9 +63,10 @@ export function AttendanceHistoryScreen() {
 
   const loadHistory = () => {
     const daysInMonth = getDaysInMonth(year, month);
-    const timeEntries: { clockIn: string; clockOut: string }[] = [];
+    const timeEntries: { clockIn: string; clockOut: string; arrivalType?: WorkArrivalType }[] = [];
     const result = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
+      const arrivalType = getArrivalTypeForDate(dateKey, data.workDays, data.workDayTypes);
       const effective = getEffectiveCommuteTimes(
         dateKey,
         data.commuteTimes[dateKey],
@@ -72,7 +77,11 @@ export function AttendanceHistoryScreen() {
       const clockIn = effective?.clockIn ?? '--:--';
       const clockOut = effective?.clockOut ?? '--:--';
       if (effective && isValidCommutePair(effective.clockIn, effective.clockOut)) {
-        timeEntries.push({ clockIn: effective.clockIn, clockOut: effective.clockOut });
+        timeEntries.push({
+          clockIn: effective.clockIn,
+          clockOut: effective.clockOut,
+          arrivalType,
+        });
       }
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
       const rowColors = getCommuteRowColors(
@@ -82,7 +91,12 @@ export function AttendanceHistoryScreen() {
         arrivalConfigs
       );
       const workHours = effective
-        ? getWorkHoursParenthetical(effective.clockIn, effective.clockOut, totalBreakMinutes)
+        ? getWorkHoursParenthetical(
+            effective.clockIn,
+            effective.clockOut,
+            breakSettings,
+            arrivalType
+          )
         : '';
 
       return {
@@ -92,7 +106,7 @@ export function AttendanceHistoryScreen() {
       };
     });
 
-    const totalMinutes = sumWorkMinutes(timeEntries, totalBreakMinutes);
+    const totalMinutes = sumWorkMinutes(timeEntries, breakSettings);
     setTotalWorkHours(formatTotalWorkHoursDecimal(totalMinutes));
     setHistory(result);
   };
@@ -108,6 +122,8 @@ export function AttendanceHistoryScreen() {
     language,
     lunchBreakMinutes,
     eveningBreakMinutes,
+    morningBreakMinutes,
+    breakSettings,
     arrivalConfigs,
   ]);
 

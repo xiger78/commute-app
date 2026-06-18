@@ -1,9 +1,10 @@
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Language } from '../i18n/types';
-import { WorkData } from '../types';
+import { ArrivalTypeConfig, WorkArrivalType, WorkData } from '../types';
+import { getArrivalTypeForDate, getEffectiveCommuteTimes } from './arrivalSettings';
 import { formatDateKey, getDaysInMonth } from './dateUtils';
-import { calcWorkMinutes } from './workDuration';
+import { BreakSettings, calcBreakMinutesForEntry, calcWorkMinutes } from './workDuration';
 
 function formatDuration(minutes: number, lang: Language): string {
   const h = Math.floor(minutes / 60);
@@ -66,7 +67,8 @@ export function generateAttendanceCsv(
   year: number,
   month: number,
   lang: Language,
-  lunchBreakMinutes: number
+  breakSettings: BreakSettings,
+  arrivalConfigs: Record<WorkArrivalType, ArrivalTypeConfig>
 ): string {
   const daysInMonth = getDaysInMonth(year, month);
   const lines: string[] = [buildHeader(year, month, lang)];
@@ -74,10 +76,18 @@ export function generateAttendanceCsv(
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateKey = formatDateKey(year, month, day);
-    const commute = data.commuteTimes[dateKey];
-    const clockIn = commute?.clockIn ?? '';
-    const clockOut = commute?.clockOut ?? '';
-    const workMin = calcWorkMinutes(clockIn, clockOut, lunchBreakMinutes);
+    const arrivalType = getArrivalTypeForDate(dateKey, data.workDays, data.workDayTypes);
+    const effective = getEffectiveCommuteTimes(
+      dateKey,
+      data.commuteTimes[dateKey],
+      data.workDays,
+      data.workDayTypes,
+      arrivalConfigs
+    );
+    const clockIn = effective?.clockIn ?? data.commuteTimes[dateKey]?.clockIn ?? '';
+    const clockOut = effective?.clockOut ?? data.commuteTimes[dateKey]?.clockOut ?? '';
+    const breakMinutes = calcBreakMinutesForEntry(clockIn, arrivalType, breakSettings);
+    const workMin = calcWorkMinutes(clockIn, clockOut, breakMinutes);
     if (workMin !== null) totalMinutes += workMin;
     lines.push(buildDayLine(day, clockIn, clockOut, workMin, lang));
   }
@@ -91,9 +101,10 @@ export async function exportAttendanceCsv(
   year: number,
   month: number,
   lang: Language,
-  lunchBreakMinutes: number
+  breakSettings: BreakSettings,
+  arrivalConfigs: Record<WorkArrivalType, ArrivalTypeConfig>
 ): Promise<string> {
-  const csv = generateAttendanceCsv(data, year, month, lang, lunchBreakMinutes);
+  const csv = generateAttendanceCsv(data, year, month, lang, breakSettings, arrivalConfigs);
   const fileName = `attendance_${year}${String(month).padStart(2, '0')}.csv`;
   const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
   await FileSystem.writeAsStringAsync(fileUri, csv, {
