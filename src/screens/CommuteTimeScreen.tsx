@@ -42,6 +42,7 @@ import {
   getArrivalColorHex,
   getArrivalTypeForDate,
   getCommuteRowColors,
+  getEffectiveCommuteTimes,
   isBulkApplyTarget,
 } from '../utils/arrivalSettings';
 
@@ -250,13 +251,6 @@ export function CommuteTimeScreen() {
     return draftParts[dateKey] ?? draftFromCommuteTime(data.commuteTimes[dateKey]);
   };
 
-  const getCommuteTimeForDate = (dateKey: string): CommuteTime => {
-    if (draftParts[dateKey]) {
-      return draftToCommuteTime(draftParts[dateKey]);
-    }
-    return data.commuteTimes[dateKey] ?? { clockIn: '', clockOut: '' };
-  };
-
   const updateDraftPart = (dateKey: string, field: keyof DayTimeDraft, value: string) => {
     const current = getDraftForDate(dateKey);
     setDraftParts((prev) => ({ ...prev, [dateKey]: { ...current, [field]: value } }));
@@ -376,16 +370,35 @@ export function CommuteTimeScreen() {
     const savedList: PreviewItem[] = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
       const arrivalType = getArrivalTypeForDate(dateKey, data.workDays, data.workDayTypes);
-      const times = merged[dateKey] ?? getCommuteTimeForDate(dateKey);
       const memo = mergedMemos[dateKey] ?? '';
-      if (!times?.clockIn && !times?.clockOut && !memo) return null;
-      const clockIn = times.clockIn ?? '--:--';
-      const clockOut = times.clockOut ?? '--:--';
-      if (isValidCommutePair(clockIn, clockOut)) {
-        timeEntries.push({ clockIn, clockOut, arrivalType });
+      const effective = getEffectiveCommuteTimes(
+        dateKey,
+        merged[dateKey],
+        data.workDays,
+        data.workDayTypes,
+        arrivalConfigs
+      );
+      const raw = merged[dateKey];
+      if (!effective && !memo && !raw?.clockIn && !raw?.clockOut) return null;
+
+      const clockIn = effective?.clockIn ?? raw?.clockIn ?? '--:--';
+      const clockOut = effective?.clockOut ?? raw?.clockOut ?? '--:--';
+      if (effective && isValidCommutePair(effective.clockIn, effective.clockOut)) {
+        timeEntries.push({
+          clockIn: effective.clockIn,
+          clockOut: effective.clockOut,
+          arrivalType,
+        });
       }
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
-      const workHours = getWorkHoursParenthetical(clockIn, clockOut, breakSettings, arrivalType);
+      const workHours = effective
+        ? getWorkHoursParenthetical(
+            effective.clockIn,
+            effective.clockOut,
+            breakSettings,
+            arrivalType
+          )
+        : '';
       const memoSuffix = memo ? ` ${tr('commuteMemoPreview', { memo })}` : '';
       return {
         dateKey,
