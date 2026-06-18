@@ -16,3 +16,7 @@ android/app/build/
 android/build/
 android/.gradle/
 .DS_Store
+
+# Release APK (build locally; do not commit)
+*.apk
+dist/
