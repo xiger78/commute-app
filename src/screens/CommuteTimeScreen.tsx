@@ -453,7 +453,12 @@ export function CommuteTimeScreen() {
           </View>
         </View>
         <View style={styles.applyRow}>
-          <Button title={tr('bulkApplyAction')} onPress={applyBulk} fullWidth />
+          <View style={styles.applyBtnCol}>
+            <Button title={tr('bulkApplyAction')} onPress={applyBulk} fullWidth />
+          </View>
+          <View style={styles.applyBtnCol}>
+            <Button title={tr('save')} onPress={handleSave} variant="success" fullWidth />
+          </View>
         </View>
         <Text style={styles.bulkNote}>{tr('bulkExcludeNote', { count: bulkTargetDays.length })}</Text>
       </View>
@@ -503,10 +508,6 @@ export function CommuteTimeScreen() {
             />
           );
         })}
-      </View>
-
-      <View style={styles.saveRow}>
-        <Button title={tr('save')} onPress={handleSave} fullWidth />
       </View>
 
       {preview.length > 0 && (
@@ -571,7 +572,8 @@ const styles = StyleSheet.create({
   },
   bulkTimeCol: { flex: 1, minWidth: 120 },
   bulkLabel: { fontSize: 12, fontWeight: '600', color: '#555', marginBottom: 4 },
-  applyRow: { marginTop: 12 },
+  applyRow: { marginTop: 12, flexDirection: 'row', gap: 8 },
+  applyBtnCol: { flex: 1 },
   bulkNote: { fontSize: 11, color: '#888', marginTop: 8 },
   legendBox: {
     borderWidth: 1,
@@ -608,7 +610,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     minHeight: 40,
   },
-  saveRow: { marginTop: 20 },
   preview: { marginTop: 24, padding: 16, backgroundColor: '#f3e5f5', borderRadius: 12 },
   previewTitle: { fontSize: 15, fontWeight: '600', marginBottom: 8, color: '#6a1b9a' },
   previewTotal: {
