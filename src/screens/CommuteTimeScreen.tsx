@@ -37,7 +37,7 @@ import {
   sumWorkMinutes,
 } from '../utils/workDuration';
 import { ArrivalTypeConfig, CommuteTime, HolidayWorkType, WorkArrivalType } from '../types';
-import { getCommuteRowColors } from '../utils/arrivalSettings';
+import { configToCommuteTimes, getCommuteRowColors } from '../utils/arrivalSettings';
 
 type PreviewItem = {
   dateKey: string;
@@ -83,6 +83,15 @@ function typeLabelFor(
   if (dayType === 'remote') return tr('remote');
   if (dayType === 'vacation') return tr('arrivalVacation');
   return tr('holidayLabel');
+}
+
+function arrivalTypeForBulk(
+  dateKey: string,
+  workDays: string[],
+  workDayTypes: Record<string, WorkArrivalType>
+): WorkArrivalType {
+  if (!workDays.includes(dateKey)) return 'remote';
+  return workDayTypes[dateKey] ?? 'normal';
 }
 
 function DayTimeRow({
@@ -261,18 +270,41 @@ export function CommuteTimeScreen() {
     }
 
     const next = { ...draftParts };
+    const bulkDraft: DayTimeDraft = {
+      clockInHour,
+      clockInMinute,
+      clockOutHour,
+      clockOutMinute,
+    };
+    let appliedCount = 0;
+
     bulkApplyDays.forEach((dateKey) => {
-      next[dateKey] = {
-        clockInHour: clockInHour,
-        clockInMinute: clockInMinute,
-        clockOutHour: clockOutHour,
-        clockOutMinute: clockOutMinute,
-      };
+      const arrivalType = arrivalTypeForBulk(
+        dateKey,
+        data.workDays,
+        data.workDayTypes
+      );
+      if (arrivalType === 'vacation') return;
+
+      if (arrivalType === 'early') {
+        next[dateKey] = draftFromCommuteTime(configToCommuteTimes(earlyArrival));
+      } else if (arrivalType === 'late') {
+        next[dateKey] = draftFromCommuteTime(configToCommuteTimes(lateArrival));
+      } else {
+        next[dateKey] = bulkDraft;
+      }
+      appliedCount++;
     });
+
+    if (appliedCount === 0) {
+      Alert.alert(tr('alertNotice'), tr('alertBulkNoDays'));
+      return;
+    }
+
     setDraftParts(next);
     Alert.alert(
       tr('alertDone'),
-      tr('alertBulkClockIn', { month, count: bulkApplyDays.length })
+      tr('alertBulkClockIn', { month, count: appliedCount })
     );
   };
 
