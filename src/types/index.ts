@@ -12,6 +12,7 @@ export type ArrivalColor = 'green' | 'yellow' | 'blue' | 'red' | 'orange';
 export interface ArrivalTypeConfig {
   color: ArrivalColor;
   clockIn: string;
+  clockOut?: string;
 }
 
 export interface WorkData {

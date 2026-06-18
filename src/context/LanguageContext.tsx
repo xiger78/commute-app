@@ -18,8 +18,16 @@ function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
     eveningBreakMinutes: parsed.eveningBreakMinutes ?? 0,
     morningBreakMinutes: parsed.morningBreakMinutes ?? 60,
     normalArrival: { ...DEFAULT_ARRIVAL_CONFIGS.normal, ...parsed.normalArrival },
-    earlyArrival: { ...DEFAULT_ARRIVAL_CONFIGS.early, ...parsed.earlyArrival },
-    lateArrival: { ...DEFAULT_ARRIVAL_CONFIGS.late, ...parsed.lateArrival },
+    earlyArrival: {
+      ...DEFAULT_ARRIVAL_CONFIGS.early,
+      ...parsed.earlyArrival,
+      clockOut: parsed.earlyArrival?.clockOut ?? DEFAULT_ARRIVAL_CONFIGS.early.clockOut,
+    },
+    lateArrival: {
+      ...DEFAULT_ARRIVAL_CONFIGS.late,
+      ...parsed.lateArrival,
+      clockOut: parsed.lateArrival?.clockOut ?? DEFAULT_ARRIVAL_CONFIGS.late.clockOut,
+    },
     remoteArrival: { ...DEFAULT_ARRIVAL_CONFIGS.remote, ...parsed.remoteArrival },
     vacationArrival: { ...DEFAULT_ARRIVAL_CONFIGS.vacation, ...parsed.vacationArrival },
   };

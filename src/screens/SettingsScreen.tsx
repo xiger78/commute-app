@@ -22,7 +22,7 @@ import { LANGUAGE_OPTIONS, Language } from '../i18n/types';
 import { exportAttendanceCsv } from '../utils/attendanceReport';
 import { ArrivalColor, ArrivalTypeConfig } from '../types';
 import { formatTime, isValidTime } from '../utils/dateUtils';
-import { parseClockInToDraft } from '../utils/arrivalSettings';
+import { parseClockInToDraft, DEFAULT_ARRIVAL_CONFIGS } from '../utils/arrivalSettings';
 
 function SettingsCard({
   category,
@@ -265,6 +265,8 @@ export function SettingsScreen() {
       Alert.alert(tr('alertInputError'), tr('alertInvalidClockIn'));
       return;
     }
+    early.clockOut = earlyArrival.clockOut ?? DEFAULT_ARRIVAL_CONFIGS.early.clockOut;
+    late.clockOut = lateArrival.clockOut ?? DEFAULT_ARRIVAL_CONFIGS.late.clockOut;
     setSavingArrival(true);
     try {
       await setArrivalSettings(normal, early, late, remote, vacation);
