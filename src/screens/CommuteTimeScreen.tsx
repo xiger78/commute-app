@@ -23,11 +23,9 @@ import {
   formatDateWithTypeLabel,
   formatSlashDateWithWeekday,
 } from '../utils/dateUtils';
-import { getBulkApplyDateKeys } from '../utils/japaneseHolidays';
+import { getBulkApplyDateKeys, isNonWorkingDay } from '../utils/japaneseHolidays';
 import {
   canChangeHolidayWorkType,
-  CommuteDayType,
-  getCommuteDayType,
 } from '../utils/commuteDayType';
 import { getWeekdays, TranslationKey } from '../i18n/translations';
 import {
@@ -38,9 +36,13 @@ import {
 } from '../utils/workDuration';
 import { ArrivalTypeConfig, CommuteTime, HolidayWorkType, WorkArrivalType } from '../types';
 import {
+  ARRIVAL_BORDER_HEX,
   bulkDraftForArrivalType,
   draftFromCommuteTime,
+  getArrivalColorHex,
+  getArrivalTypeForDate,
   getCommuteRowColors,
+  isBulkApplyTarget,
 } from '../utils/arrivalSettings';
 
 type PreviewItem = {
@@ -68,19 +70,34 @@ function draftToCommuteTime(parts: DayTimeDraft): CommuteTime {
   };
 }
 
-function typeLabelFor(
+const COMMUTE_LEGEND_TYPES: WorkArrivalType[] = ['early', 'normal', 'late', 'remote'];
+
+function arrivalTypeLabel(
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string,
-  dayType: CommuteDayType
+  type: WorkArrivalType
 ): string {
-  if (dayType === 'office') return tr('office');
-  if (dayType === 'remote') return tr('remote');
-  if (dayType === 'vacation') return tr('arrivalVacation');
-  return tr('holidayLabel');
+  if (type === 'early') return tr('arrivalEarly');
+  if (type === 'late') return tr('arrivalLate');
+  if (type === 'remote') return tr('arrivalRemote');
+  if (type === 'vacation') return tr('arrivalVacation');
+  return tr('arrivalNormal');
+}
+
+function dateTypeLabel(
+  dateKey: string,
+  workDays: string[],
+  workDayTypes: Record<string, WorkArrivalType>,
+  tr: (key: TranslationKey, params?: Record<string, string | number>) => string
+): string {
+  if (isNonWorkingDay(dateKey) && !workDays.includes(dateKey)) {
+    return tr('holidayLabel');
+  }
+  return arrivalTypeLabel(tr, getArrivalTypeForDate(dateKey, workDays, workDayTypes));
 }
 
 function DayTimeRow({
   dateKey,
-  dayType,
+  typeLabel,
   rowColors,
   canChangeType,
   draft,
@@ -92,7 +109,7 @@ function DayTimeRow({
   weekdays,
 }: {
   dateKey: string;
-  dayType: CommuteDayType;
+  typeLabel: string;
   rowColors: { backgroundColor: string; borderColor: string };
   canChangeType: boolean;
   draft: DayTimeDraft;
@@ -103,7 +120,6 @@ function DayTimeRow({
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   weekdays: string[];
 }) {
-  const typeLabel = typeLabelFor(tr, dayType);
   const dateLabel = formatDateWithTypeLabel(dateKey, weekdays, typeLabel);
 
   const openTypePicker = () => {
@@ -207,6 +223,22 @@ export function CommuteTimeScreen() {
     () => getBulkApplyDateKeys(year, month),
     [year, month]
   );
+  const bulkTargetDays = useMemo(
+    () =>
+      bulkApplyDays.filter((dateKey) =>
+        isBulkApplyTarget(getArrivalTypeForDate(dateKey, data.workDays, data.workDayTypes))
+      ),
+    [bulkApplyDays, data.workDays, data.workDayTypes]
+  );
+  const commuteLegendItems = useMemo(
+    () =>
+      COMMUTE_LEGEND_TYPES.map((type) => ({
+        color: getArrivalColorHex(arrivalConfigs[type].color),
+        borderColor: ARRIVAL_BORDER_HEX[arrivalConfigs[type].color],
+        label: arrivalTypeLabel(tr, type),
+      })),
+    [arrivalConfigs, tr, language]
+  );
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
 
@@ -264,10 +296,8 @@ export function CommuteTimeScreen() {
     let appliedCount = 0;
 
     bulkApplyDays.forEach((dateKey) => {
-      const arrivalType = data.workDays.includes(dateKey)
-        ? (data.workDayTypes[dateKey] ?? 'normal')
-        : 'remote';
-      const draft = bulkDraftForArrivalType(arrivalType, bulkDraft, arrivalConfigs);
+      const arrivalType = getArrivalTypeForDate(dateKey, data.workDays, data.workDayTypes);
+      const draft = bulkDraftForArrivalType(arrivalType, bulkDraft);
       if (!draft) return;
 
       next[dateKey] = draft;
@@ -425,17 +455,28 @@ export function CommuteTimeScreen() {
         <View style={styles.applyRow}>
           <Button title={tr('bulkApplyAction')} onPress={applyBulk} fullWidth />
         </View>
-        <Text style={styles.bulkNote}>{tr('bulkExcludeNote', { count: bulkApplyDays.length })}</Text>
+        <Text style={styles.bulkNote}>{tr('bulkExcludeNote', { count: bulkTargetDays.length })}</Text>
+      </View>
+
+      <View style={styles.legendBox}>
+        <Text style={styles.legendTitle}>{tr('commuteColorLegendTitle')}</Text>
+        <View style={styles.legendRow}>
+          {commuteLegendItems.map((item) => (
+            <View key={item.label} style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendSwatch,
+                  { backgroundColor: item.color, borderColor: item.borderColor },
+                ]}
+              />
+              <Text style={styles.legendText}>{item.label}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       <View style={styles.dayList}>
         {monthDays.map((dateKey) => {
-          const dayType = getCommuteDayType(
-            dateKey,
-            data.workDays,
-            data.holidayWorkTypes,
-            data.workDayTypes
-          );
           const rowColors = getCommuteRowColors(
             dateKey,
             data.workDays,
@@ -446,7 +487,7 @@ export function CommuteTimeScreen() {
             <DayTimeRow
               key={dateKey}
               dateKey={dateKey}
-              dayType={dayType}
+              typeLabel={dateTypeLabel(dateKey, data.workDays, data.workDayTypes, tr)}
               rowColors={rowColors}
               canChangeType={
                 canChangeHolidayWorkType(dateKey, data.workDays) &&
@@ -532,6 +573,19 @@ const styles = StyleSheet.create({
   bulkLabel: { fontSize: 12, fontWeight: '600', color: '#555', marginBottom: 4 },
   applyRow: { marginTop: 12 },
   bulkNote: { fontSize: 11, color: '#888', marginTop: 8 },
+  legendBox: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+  },
+  legendTitle: { fontSize: 13, fontWeight: '700', color: '#333', marginBottom: 10 },
+  legendRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: '45%' },
+  legendSwatch: { width: 18, height: 18, borderRadius: 4, borderWidth: 1 },
+  legendText: { fontSize: 12, fontWeight: '600', color: '#444' },
   dayList: { gap: 10 },
   dayCard: {
     borderRadius: 12,

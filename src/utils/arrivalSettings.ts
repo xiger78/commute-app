@@ -111,15 +111,16 @@ export function draftFromCommuteTime(times?: CommuteTime): DayTimeDraft {
   };
 }
 
+/** 통상·재택만 일괄적용 대상. 일찍·늦게·휴가는 수동 수정만 가능 */
+export function isBulkApplyTarget(arrivalType: WorkArrivalType): boolean {
+  return arrivalType === 'normal' || arrivalType === 'remote';
+}
+
 export function bulkDraftForArrivalType(
   arrivalType: WorkArrivalType,
-  bulkDraft: DayTimeDraft,
-  arrivalConfigs: Record<WorkArrivalType, ArrivalTypeConfig>
+  bulkDraft: DayTimeDraft
 ): DayTimeDraft | null {
-  if (arrivalType === 'vacation') return null;
-  if (arrivalType === 'early' || arrivalType === 'late') {
-    return draftFromArrivalConfig(arrivalConfigs[arrivalType]);
-  }
+  if (!isBulkApplyTarget(arrivalType)) return null;
   return bulkDraft;
 }
 
