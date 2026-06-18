@@ -211,8 +211,8 @@ export function CommuteTimeScreen() {
   );
   const totalBreakMinutes = lunchBreakMinutes + eveningBreakMinutes;
   const bulkApplyDays = useMemo(
-    () => getBulkApplyDateKeys(year, month, data.workDayTypes),
-    [year, month, data.workDayTypes]
+    () => getBulkApplyDateKeys(year, month),
+    [year, month]
   );
   const daysInMonth = getDaysInMonth(year, month);
   const weekdays = getWeekdays(language);
