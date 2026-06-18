@@ -42,6 +42,16 @@ export const DEFAULT_ARRIVAL_CONFIGS: Record<WorkArrivalType, ArrivalTypeConfig>
 
 export const WORK_HOURS_PER_DAY = 8;
 
+/** 토·일·공휴일 출근일 기본 출퇴근 시각 */
+export const HOLIDAY_WORK_COMMUTE_TIMES: CommuteTime = {
+  clockIn: '08:40',
+  clockOut: '17:40',
+};
+
+export function isHolidayWorkDay(dateKey: string, workDays: string[]): boolean {
+  return isNonWorkingDay(dateKey) && workDays.includes(dateKey);
+}
+
 export function getArrivalColorHex(color: ArrivalColor): string {
   return ARRIVAL_COLOR_HEX[color];
 }
@@ -146,19 +156,32 @@ export function getEffectiveCommuteTimes(
   if (arrivalType === 'vacation') return null;
 
   if (savedIn && normalizeTimeString(savedIn)) {
+    const normalizedIn = normalizeTimeString(savedIn)!;
+    if (isHolidayWorkDay(dateKey, workDays)) {
+      const normalizedOut =
+        savedOut && normalizeTimeString(savedOut)
+          ? normalizeTimeString(savedOut)!
+          : HOLIDAY_WORK_COMMUTE_TIMES.clockOut;
+      if (isValidCommutePair(normalizedIn, normalizedOut)) {
+        return { clockIn: normalizedIn, clockOut: normalizedOut };
+      }
+    }
     const derived = configToCommuteTimes({
       ...arrivalConfigs[arrivalType],
-      clockIn: normalizeTimeString(savedIn)!,
+      clockIn: normalizedIn,
     });
     if (isValidCommutePair(savedIn, derived.clockOut)) {
       return {
-        clockIn: normalizeTimeString(savedIn)!,
+        clockIn: normalizedIn,
         clockOut: derived.clockOut,
       };
     }
   }
 
   if (workDays.includes(dateKey) || savedIn || savedOut) {
+    if (isHolidayWorkDay(dateKey, workDays)) {
+      return { ...HOLIDAY_WORK_COMMUTE_TIMES };
+    }
     const fromConfig = configToCommuteTimes(arrivalConfigs[arrivalType]);
     if (isValidCommutePair(fromConfig.clockIn, fromConfig.clockOut)) {
       return fromConfig;

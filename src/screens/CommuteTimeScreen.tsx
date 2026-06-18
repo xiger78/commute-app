@@ -43,7 +43,9 @@ import {
   getArrivalTypeForDate,
   getCommuteRowColors,
   getEffectiveCommuteTimes,
+  HOLIDAY_WORK_COMMUTE_TIMES,
   isBulkApplyTarget,
+  isHolidayWorkDay,
 } from '../utils/arrivalSettings';
 
 type PreviewItem = {
@@ -248,7 +250,15 @@ export function CommuteTimeScreen() {
   const weekdays = getWeekdays(language);
 
   const getDraftForDate = (dateKey: string): DayTimeDraft => {
-    return draftParts[dateKey] ?? draftFromCommuteTime(data.commuteTimes[dateKey]);
+    if (draftParts[dateKey]) return draftParts[dateKey];
+    const saved = data.commuteTimes[dateKey];
+    if (saved?.clockIn || saved?.clockOut) {
+      return draftFromCommuteTime(saved);
+    }
+    if (isHolidayWorkDay(dateKey, data.workDays)) {
+      return draftFromCommuteTime(HOLIDAY_WORK_COMMUTE_TIMES);
+    }
+    return draftFromCommuteTime(saved);
   };
 
   const updateDraftPart = (dateKey: string, field: keyof DayTimeDraft, value: string) => {
