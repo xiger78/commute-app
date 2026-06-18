@@ -12,11 +12,12 @@ import {
 import {
   formatTotalWorkHoursDecimal,
   getWorkHoursParenthetical,
+  isValidCommutePair,
   sumWorkMinutes,
 } from '../utils/workDuration';
 import { getWeekdays } from '../i18n/translations';
 import { ArrivalTypeConfig, WorkArrivalType } from '../types';
-import { getCommuteRowColors } from '../utils/arrivalSettings';
+import { getCommuteRowColors, getEffectiveCommuteTimes } from '../utils/arrivalSettings';
 
 type HistoryItem = {
   dateKey: string;
@@ -61,10 +62,18 @@ export function AttendanceHistoryScreen() {
     const timeEntries: { clockIn: string; clockOut: string }[] = [];
     const result = Array.from({ length: daysInMonth }, (_, i) => {
       const dateKey = formatDateKey(year, month, i + 1);
-      const commute = data.commuteTimes[dateKey];
-      const clockIn = commute?.clockIn || '--:--';
-      const clockOut = commute?.clockOut || '--:--';
-      timeEntries.push({ clockIn, clockOut });
+      const effective = getEffectiveCommuteTimes(
+        dateKey,
+        data.commuteTimes[dateKey],
+        data.workDays,
+        data.workDayTypes,
+        arrivalConfigs
+      );
+      const clockIn = effective?.clockIn ?? '--:--';
+      const clockOut = effective?.clockOut ?? '--:--';
+      if (effective && isValidCommutePair(effective.clockIn, effective.clockOut)) {
+        timeEntries.push({ clockIn: effective.clockIn, clockOut: effective.clockOut });
+      }
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
       const rowColors = getCommuteRowColors(
         dateKey,
@@ -72,7 +81,9 @@ export function AttendanceHistoryScreen() {
         data.workDayTypes,
         arrivalConfigs
       );
-      const workHours = getWorkHoursParenthetical(clockIn, clockOut, totalBreakMinutes);
+      const workHours = effective
+        ? getWorkHoursParenthetical(effective.clockIn, effective.clockOut, totalBreakMinutes)
+        : '';
 
       return {
         dateKey,

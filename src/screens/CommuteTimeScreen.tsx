@@ -19,7 +19,6 @@ import {
   formatTime,
   getDaysInMonth,
   isValidTime,
-  parseTime,
   formatDateKey,
   formatDateWithTypeLabel,
   formatSlashDateWithWeekday,
@@ -34,10 +33,15 @@ import { getWeekdays, TranslationKey } from '../i18n/translations';
 import {
   formatTotalWorkHoursDecimal,
   getWorkHoursParenthetical,
+  isValidCommutePair,
   sumWorkMinutes,
 } from '../utils/workDuration';
 import { ArrivalTypeConfig, CommuteTime, HolidayWorkType, WorkArrivalType } from '../types';
-import { configToCommuteTimes, getCommuteRowColors } from '../utils/arrivalSettings';
+import {
+  bulkDraftForArrivalType,
+  draftFromCommuteTime,
+  getCommuteRowColors,
+} from '../utils/arrivalSettings';
 
 type PreviewItem = {
   dateKey: string;
@@ -50,17 +54,6 @@ type DayTimeDraft = {
   clockOutHour: string;
   clockOutMinute: string;
 };
-
-function draftFromCommuteTime(times?: CommuteTime): DayTimeDraft {
-  const clockIn = parseTime(times?.clockIn ?? '');
-  const clockOut = parseTime(times?.clockOut ?? '');
-  return {
-    clockInHour: clockIn.hour,
-    clockInMinute: clockIn.minute,
-    clockOutHour: clockOut.hour,
-    clockOutMinute: clockOut.minute,
-  };
-}
 
 function draftToCommuteTime(parts: DayTimeDraft): CommuteTime {
   const hasClockIn = Boolean(parts.clockInHour || parts.clockInMinute);
@@ -83,15 +76,6 @@ function typeLabelFor(
   if (dayType === 'remote') return tr('remote');
   if (dayType === 'vacation') return tr('arrivalVacation');
   return tr('holidayLabel');
-}
-
-function arrivalTypeForBulk(
-  dateKey: string,
-  workDays: string[],
-  workDayTypes: Record<string, WorkArrivalType>
-): WorkArrivalType {
-  if (!workDays.includes(dateKey)) return 'remote';
-  return workDayTypes[dateKey] ?? 'normal';
 }
 
 function DayTimeRow({
@@ -255,7 +239,7 @@ export function CommuteTimeScreen() {
     await setHolidayWorkType(dateKey, workType);
   };
 
-  const applyBulk = () => {
+  const applyBulk = async () => {
     if (!isValidTime(clockInHour, clockInMinute)) {
       Alert.alert(tr('alertInputError'), tr('alertInvalidClockIn'));
       return;
@@ -270,6 +254,7 @@ export function CommuteTimeScreen() {
     }
 
     const next = { ...draftParts };
+    const nextCommute = { ...data.commuteTimes };
     const bulkDraft: DayTimeDraft = {
       clockInHour,
       clockInMinute,
@@ -279,20 +264,14 @@ export function CommuteTimeScreen() {
     let appliedCount = 0;
 
     bulkApplyDays.forEach((dateKey) => {
-      const arrivalType = arrivalTypeForBulk(
-        dateKey,
-        data.workDays,
-        data.workDayTypes
-      );
-      if (arrivalType === 'vacation') return;
+      const arrivalType = data.workDays.includes(dateKey)
+        ? (data.workDayTypes[dateKey] ?? 'normal')
+        : 'remote';
+      const draft = bulkDraftForArrivalType(arrivalType, bulkDraft, arrivalConfigs);
+      if (!draft) return;
 
-      if (arrivalType === 'early') {
-        next[dateKey] = draftFromCommuteTime(configToCommuteTimes(earlyArrival));
-      } else if (arrivalType === 'late') {
-        next[dateKey] = draftFromCommuteTime(configToCommuteTimes(lateArrival));
-      } else {
-        next[dateKey] = bulkDraft;
-      }
+      next[dateKey] = draft;
+      nextCommute[dateKey] = draftToCommuteTime(draft);
       appliedCount++;
     });
 
@@ -302,6 +281,7 @@ export function CommuteTimeScreen() {
     }
 
     setDraftParts(next);
+    await setCommuteTimes(nextCommute);
     Alert.alert(
       tr('alertDone'),
       tr('alertBulkClockIn', { month, count: appliedCount })
@@ -366,7 +346,9 @@ export function CommuteTimeScreen() {
       if (!times?.clockIn && !times?.clockOut && !memo) return null;
       const clockIn = times.clockIn ?? '--:--';
       const clockOut = times.clockOut ?? '--:--';
-      timeEntries.push({ clockIn, clockOut });
+      if (isValidCommutePair(clockIn, clockOut)) {
+        timeEntries.push({ clockIn, clockOut });
+      }
       const dateLabel = formatSlashDateWithWeekday(dateKey, weekdays);
       const workHours = getWorkHoursParenthetical(clockIn, clockOut, totalBreakMinutes);
       const memoSuffix = memo ? ` ${tr('commuteMemoPreview', { memo })}` : '';

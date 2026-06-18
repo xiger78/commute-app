@@ -1,6 +1,7 @@
-import { ArrivalColor, ArrivalTypeConfig, WorkArrivalType } from '../types';
+import { ArrivalColor, ArrivalTypeConfig, CommuteTime, WorkArrivalType } from '../types';
 import { formatTime, parseTime } from './dateUtils';
 import { isNonWorkingDay } from './japaneseHolidays';
+import { isValidCommutePair, normalizeTimeString } from './workDuration';
 
 export const ARRIVAL_COLOR_HEX: Record<ArrivalColor, string> = {
   green: '#A5D6A7',
@@ -65,7 +66,104 @@ export function configToCommuteTimes(config: ArrivalTypeConfig): {
 
 export function parseClockInToDraft(clockIn: string): { hour: string; minute: string } {
   const parsed = parseTime(clockIn);
-  return { hour: parsed.hour, minute: parsed.minute };
+  const h = parseInt(parsed.hour, 10);
+  const m = parseInt(parsed.minute, 10);
+  if (isNaN(h) || isNaN(m)) return { hour: '', minute: '' };
+  return { hour: String(h).padStart(2, '0'), minute: String(m).padStart(2, '0') };
+}
+
+export function getArrivalTypeForDate(
+  dateKey: string,
+  workDays: string[],
+  workDayTypes: Record<string, WorkArrivalType>
+): WorkArrivalType {
+  if (!workDays.includes(dateKey)) return 'remote';
+  return workDayTypes[dateKey] ?? 'normal';
+}
+
+export type DayTimeDraft = {
+  clockInHour: string;
+  clockInMinute: string;
+  clockOutHour: string;
+  clockOutMinute: string;
+};
+
+export function draftFromArrivalConfig(config: ArrivalTypeConfig): DayTimeDraft {
+  const times = configToCommuteTimes(config);
+  const clockIn = parseClockInToDraft(times.clockIn);
+  const clockOut = parseClockInToDraft(times.clockOut);
+  return {
+    clockInHour: clockIn.hour,
+    clockInMinute: clockIn.minute,
+    clockOutHour: clockOut.hour,
+    clockOutMinute: clockOut.minute,
+  };
+}
+
+export function draftFromCommuteTime(times?: CommuteTime): DayTimeDraft {
+  const clockIn = parseClockInToDraft(times?.clockIn ?? '');
+  const clockOut = parseClockInToDraft(times?.clockOut ?? '');
+  return {
+    clockInHour: clockIn.hour,
+    clockInMinute: clockIn.minute,
+    clockOutHour: clockOut.hour,
+    clockOutMinute: clockOut.minute,
+  };
+}
+
+export function bulkDraftForArrivalType(
+  arrivalType: WorkArrivalType,
+  bulkDraft: DayTimeDraft,
+  arrivalConfigs: Record<WorkArrivalType, ArrivalTypeConfig>
+): DayTimeDraft | null {
+  if (arrivalType === 'vacation') return null;
+  if (arrivalType === 'early' || arrivalType === 'late') {
+    return draftFromArrivalConfig(arrivalConfigs[arrivalType]);
+  }
+  return bulkDraft;
+}
+
+export function getEffectiveCommuteTimes(
+  dateKey: string,
+  commute: CommuteTime | undefined,
+  workDays: string[],
+  workDayTypes: Record<string, WorkArrivalType>,
+  arrivalConfigs: Record<WorkArrivalType, ArrivalTypeConfig>
+): CommuteTime | null {
+  const arrivalType = getArrivalTypeForDate(dateKey, workDays, workDayTypes);
+  const savedIn = commute?.clockIn?.trim() ?? '';
+  const savedOut = commute?.clockOut?.trim() ?? '';
+
+  if (isValidCommutePair(savedIn, savedOut)) {
+    return {
+      clockIn: normalizeTimeString(savedIn)!,
+      clockOut: normalizeTimeString(savedOut)!,
+    };
+  }
+
+  if (arrivalType === 'vacation') return null;
+
+  if (savedIn && normalizeTimeString(savedIn)) {
+    const derived = configToCommuteTimes({
+      ...arrivalConfigs[arrivalType],
+      clockIn: normalizeTimeString(savedIn)!,
+    });
+    if (isValidCommutePair(savedIn, derived.clockOut)) {
+      return {
+        clockIn: normalizeTimeString(savedIn)!,
+        clockOut: derived.clockOut,
+      };
+    }
+  }
+
+  if (workDays.includes(dateKey) || savedIn || savedOut) {
+    const fromConfig = configToCommuteTimes(arrivalConfigs[arrivalType]);
+    if (isValidCommutePair(fromConfig.clockIn, fromConfig.clockOut)) {
+      return fromConfig;
+    }
+  }
+
+  return null;
 }
 
 export function getCommuteRowColors(
