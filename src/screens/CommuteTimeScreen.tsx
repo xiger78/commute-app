@@ -251,14 +251,18 @@ export function CommuteTimeScreen() {
 
   const getDraftForDate = (dateKey: string): DayTimeDraft => {
     if (draftParts[dateKey]) return draftParts[dateKey];
-    const saved = data.commuteTimes[dateKey];
-    if (saved?.clockIn || saved?.clockOut) {
-      return draftFromCommuteTime(saved);
-    }
+    const effective = getEffectiveCommuteTimes(
+      dateKey,
+      data.commuteTimes[dateKey],
+      data.workDays,
+      data.workDayTypes,
+      arrivalConfigs
+    );
+    if (effective) return draftFromCommuteTime(effective);
     if (isHolidayWorkDay(dateKey, data.workDays)) {
       return draftFromCommuteTime(HOLIDAY_WORK_COMMUTE_TIMES);
     }
-    return draftFromCommuteTime(saved);
+    return draftFromCommuteTime(data.commuteTimes[dateKey]);
   };
 
   const updateDraftPart = (dateKey: string, field: keyof DayTimeDraft, value: string) => {

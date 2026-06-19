@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrivalTypeConfig, HolidayWorkType, WorkArrivalType, WorkData } from '../types';
 import { configToCommuteTimes, HOLIDAY_WORK_COMMUTE_TIMES } from '../utils/arrivalSettings';
-import { isNonWorkingDay } from '../utils/japaneseHolidays';
+import { isNonWorkingDay, isWeekendDate } from '../utils/japaneseHolidays';
 import { getMonthDateKeys } from '../utils/dateUtils';
 import { loadWorkData, saveWorkData } from '../utils/storage';
 
@@ -51,9 +51,11 @@ export function useWorkData() {
       const times =
         arrivalType === 'vacation'
           ? { clockIn: '', clockOut: '' }
-          : isNonWorkingDay(dateKey)
+          : isWeekendDate(dateKey) && arrivalType === 'normal'
             ? { ...HOLIDAY_WORK_COMMUTE_TIMES }
-            : configToCommuteTimes(config);
+            : isNonWorkingDay(dateKey)
+              ? { ...HOLIDAY_WORK_COMMUTE_TIMES }
+              : configToCommuteTimes(config);
       const holidayWorkTypes = { ...data.holidayWorkTypes };
       if (isNonWorkingDay(dateKey)) {
         if (arrivalType === 'remote') {

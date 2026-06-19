@@ -1,6 +1,6 @@
 import { ArrivalColor, ArrivalTypeConfig, CommuteTime, WorkArrivalType } from '../types';
 import { formatTime, parseTime } from './dateUtils';
-import { isNonWorkingDay } from './japaneseHolidays';
+import { isNonWorkingDay, isWeekendDate } from './japaneseHolidays';
 import { isValidCommutePair, normalizeTimeString } from './workDuration';
 
 export const ARRIVAL_COLOR_HEX: Record<ArrivalColor, string> = {
@@ -50,6 +50,18 @@ export const HOLIDAY_WORK_COMMUTE_TIMES: CommuteTime = {
 
 export function isHolidayWorkDay(dateKey: string, workDays: string[]): boolean {
   return isNonWorkingDay(dateKey) && workDays.includes(dateKey);
+}
+
+export function isWeekendNormalWorkDay(
+  dateKey: string,
+  workDays: string[],
+  workDayTypes: Record<string, WorkArrivalType>
+): boolean {
+  return (
+    isWeekendDate(dateKey) &&
+    workDays.includes(dateKey) &&
+    getArrivalTypeForDate(dateKey, workDays, workDayTypes) === 'normal'
+  );
 }
 
 export function getArrivalColorHex(color: ArrivalColor): string {
@@ -147,10 +159,16 @@ export function getEffectiveCommuteTimes(
   const savedOut = commute?.clockOut?.trim() ?? '';
 
   if (isValidCommutePair(savedIn, savedOut)) {
-    return {
-      clockIn: normalizeTimeString(savedIn)!,
-      clockOut: normalizeTimeString(savedOut)!,
-    };
+    const clockIn = normalizeTimeString(savedIn)!;
+    let clockOut = normalizeTimeString(savedOut)!;
+    if (
+      isWeekendNormalWorkDay(dateKey, workDays, workDayTypes) &&
+      clockIn === HOLIDAY_WORK_COMMUTE_TIMES.clockIn &&
+      clockOut === clockInToClockOut(HOLIDAY_WORK_COMMUTE_TIMES.clockIn)
+    ) {
+      clockOut = HOLIDAY_WORK_COMMUTE_TIMES.clockOut;
+    }
+    return { clockIn, clockOut };
   }
 
   if (arrivalType === 'vacation') return null;
@@ -179,6 +197,9 @@ export function getEffectiveCommuteTimes(
   }
 
   if (workDays.includes(dateKey) || savedIn || savedOut) {
+    if (isWeekendNormalWorkDay(dateKey, workDays, workDayTypes)) {
+      return { ...HOLIDAY_WORK_COMMUTE_TIMES };
+    }
     if (isHolidayWorkDay(dateKey, workDays)) {
       return { ...HOLIDAY_WORK_COMMUTE_TIMES };
     }
