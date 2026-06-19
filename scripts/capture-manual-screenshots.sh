@@ -8,7 +8,7 @@ source "$ROOT/scripts/env.sh"
 
 LANG_CODE="${1:-zh}"
 OUT_DIR="$ROOT/docs/images/$LANG_CODE"
-PACKAGE="com.googlecalenderapp"
+PACKAGE="com.commuteapp"
 ACTIVITY="${PACKAGE}/.MainActivity"
 AVD="${ANDROID_AVD:-Nexus_5X_API_29_x86}"
 

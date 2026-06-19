@@ -2,7 +2,7 @@
 
 **Program Name:** Commute Manager (`출퇴근 관리` / `出退勤管理`)  
 **Version:** 1.0.0  
-**Package ID:** `com.googlecalenderapp`
+**Package ID:** `com.commuteapp`
 
 A React Native mobile application for managing office attendance dates, commute times, Google Calendar integration, attendance history, and settings (multi-language, CSV export, email).
 
@@ -274,7 +274,7 @@ Choose **Japanese · Chinese · Korean · English** (in that order). All screens
 ## Project Structure
 
 ```
-googleCalenderApp/
+CommuteApp/
 ├── App.tsx                    # Main app & tab navigation
 ├── src/
 │   ├── screens/               # Feature screens

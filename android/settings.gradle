@@ -44,7 +44,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = '출퇴근 관리'
+rootProject.name = 'CommuteApp'
 
 dependencyResolutionManagement {
   versionCatalogs {

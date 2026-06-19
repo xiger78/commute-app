@@ -2,7 +2,7 @@
 
 **程序名称:** 出退勤管理（Commute Manager / 출퇴근 관리）  
 **版本:** 1.0.0  
-**包 ID:** `com.googlecalenderapp`
+**包 ID:** `com.commuteapp`
 
 用于指定出勤日期、输入通勤时间、查看出勤履历、今年节假日、出勤日备忘通知，以及设置（多语言·考勤报表 CSV·邮件发送）的 React Native 移动应用。
 
@@ -215,7 +215,7 @@ dist/出退勤管理-v1.0.0.apk
 ## 项目结构
 
 ```
-googleCalenderApp/
+CommuteApp/
 ├── App.tsx                    # 主应用及标签导航
 ├── src/
 │   ├── screens/               # 功能画面

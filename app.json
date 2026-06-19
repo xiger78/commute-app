@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "出退勤管理",
-    "slug": "google-calender-app",
+    "slug": "commute-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,17 +11,17 @@
       "resizeMode": "contain",
       "backgroundColor": "#1565C0"
     },
-    "scheme": "googlecalenderapp",
+    "scheme": "commuteapp",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.googlecalenderapp"
+      "bundleIdentifier": "com.commuteapp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1565C0"
       },
-      "package": "com.googlecalenderapp"
+      "package": "com.commuteapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"

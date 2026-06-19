@@ -1,4 +1,4 @@
-package com.googlecalenderapp
+package com.commuteapp
 
 import android.os.Build
 import android.os.Bundle

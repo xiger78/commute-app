@@ -2,7 +2,7 @@
 
 **プログラム名:** 出退勤管理（Commute Manager）  
 **バージョン:** 1.0.0  
-**パッケージID:** `com.googlecalenderapp`
+**パッケージID:** `com.commuteapp`
 
 出勤日指定、出退勤時刻入力、Googleカレンダー連携、出勤履歴確認、設定（多言語・勤怠表CSV出力・メール送信）機能を提供する React Native モバイルアプリです。
 
@@ -274,7 +274,7 @@ dist/出退勤管理-v1.0.0.apk
 ## プロジェクト構成
 
 ```
-googleCalenderApp/
+CommuteApp/
 ├── App.tsx                    # メインアプリ・タブナビゲーション
 ├── src/
 │   ├── screens/               # 機能画面
