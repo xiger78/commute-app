@@ -24,9 +24,6 @@ import {
   formatSlashDateWithWeekday,
 } from '../utils/dateUtils';
 import { getBulkApplyDateKeys, isNonWorkingDay } from '../utils/japaneseHolidays';
-import {
-  canChangeHolidayWorkType,
-} from '../utils/commuteDayType';
 import { getWeekdays, TranslationKey } from '../i18n/translations';
 import {
   formatTotalWorkHoursDecimal,
@@ -34,7 +31,7 @@ import {
   isValidCommutePair,
   sumWorkMinutes,
 } from '../utils/workDuration';
-import { ArrivalTypeConfig, CommuteTime, HolidayWorkType, WorkArrivalType } from '../types';
+import { ArrivalTypeConfig, CommuteTime, WorkArrivalType } from '../types';
 import {
   ARRIVAL_BORDER_HEX,
   bulkDraftForArrivalType,
@@ -43,9 +40,7 @@ import {
   getArrivalTypeForDate,
   getCommuteRowColors,
   getEffectiveCommuteTimes,
-  HOLIDAY_WORK_COMMUTE_TIMES,
   isBulkApplyTarget,
-  isHolidayWorkDay,
 } from '../utils/arrivalSettings';
 
 type PreviewItem = {
@@ -102,42 +97,24 @@ function DayTimeRow({
   dateKey,
   typeLabel,
   rowColors,
-  canChangeType,
   draft,
   memo,
   onUpdatePart,
   onMemoChange,
-  onChangeWorkType,
   tr,
   weekdays,
 }: {
   dateKey: string;
   typeLabel: string;
   rowColors: { backgroundColor: string; borderColor: string };
-  canChangeType: boolean;
   draft: DayTimeDraft;
   memo: string;
   onUpdatePart: (dateKey: string, field: keyof DayTimeDraft, value: string) => void;
   onMemoChange: (dateKey: string, value: string) => void;
-  onChangeWorkType: (dateKey: string, workType: HolidayWorkType) => void;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   weekdays: string[];
 }) {
   const dateLabel = formatDateWithTypeLabel(dateKey, weekdays, typeLabel);
-
-  const openTypePicker = () => {
-    Alert.alert(tr('holidayWorkTypeTitle'), tr('holidayWorkTypeDesc'), [
-      {
-        text: tr('office'),
-        onPress: () => onChangeWorkType(dateKey, 'office'),
-      },
-      {
-        text: tr('remote'),
-        onPress: () => onChangeWorkType(dateKey, 'remote'),
-      },
-      { text: tr('alertCancel'), style: 'cancel' },
-    ]);
-  };
 
   return (
     <View
@@ -146,16 +123,7 @@ function DayTimeRow({
         { backgroundColor: rowColors.backgroundColor, borderColor: rowColors.borderColor },
       ]}
     >
-      {canChangeType ? (
-        <TouchableOpacity onPress={openTypePicker} activeOpacity={0.7}>
-          <View style={styles.dateLabelRow}>
-            <Text style={styles.dateLabel}>{dateLabel}</Text>
-            <MaterialCommunityIcons name="chevron-down" size={18} color="#555" />
-          </View>
-        </TouchableOpacity>
-      ) : (
-        <Text style={styles.dateLabel}>{dateLabel}</Text>
-      )}
+      <Text style={styles.dateLabel}>{dateLabel}</Text>
       <TimeRangeInput
         compact
         clockInHour={draft.clockInHour}
@@ -198,7 +166,7 @@ export function CommuteTimeScreen() {
   const [preview, setPreview] = useState<PreviewItem[]>([]);
   const [previewTotalHours, setPreviewTotalHours] = useState<string | null>(null);
 
-  const { data, setCommuteTimes, setDayMemos, setHolidayWorkType } = useWorkDataContext();
+  const { data, setCommuteTimes, setDayMemos } = useWorkDataContext();
   const {
     language,
     lunchBreakMinutes,
@@ -259,9 +227,6 @@ export function CommuteTimeScreen() {
       arrivalConfigs
     );
     if (effective) return draftFromCommuteTime(effective);
-    if (isHolidayWorkDay(dateKey, data.workDays)) {
-      return draftFromCommuteTime(HOLIDAY_WORK_COMMUTE_TIMES);
-    }
     return draftFromCommuteTime(data.commuteTimes[dateKey]);
   };
 
@@ -277,10 +242,6 @@ export function CommuteTimeScreen() {
 
   const updateMemo = (dateKey: string, value: string) => {
     setMemoDrafts((prev) => ({ ...prev, [dateKey]: value }));
-  };
-
-  const handleChangeWorkType = async (dateKey: string, workType: HolidayWorkType) => {
-    await setHolidayWorkType(dateKey, workType);
   };
 
   const applyBulk = async () => {
@@ -526,15 +487,10 @@ export function CommuteTimeScreen() {
               dateKey={dateKey}
               typeLabel={dateTypeLabel(dateKey, data.workDays, data.workDayTypes, tr)}
               rowColors={rowColors}
-              canChangeType={
-                canChangeHolidayWorkType(dateKey, data.workDays) &&
-                data.workDayTypes[dateKey] !== 'vacation'
-              }
               draft={getDraftForDate(dateKey)}
               memo={getMemoForDate(dateKey)}
               onUpdatePart={updateDraftPart}
               onMemoChange={updateMemo}
-              onChangeWorkType={handleChangeWorkType}
               tr={tr}
               weekdays={weekdays}
             />

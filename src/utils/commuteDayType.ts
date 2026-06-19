@@ -7,7 +7,7 @@ export type HolidayWorkType = 'office' | 'remote';
 export function getCommuteDayType(
   dateKey: string,
   workDays: string[],
-  holidayWorkTypes: Record<string, HolidayWorkType> = {},
+  _holidayWorkTypes: Record<string, HolidayWorkType> = {},
   workDayTypes: Record<string, WorkArrivalType> = {}
 ): CommuteDayType {
   const isWorkDay = workDays.includes(dateKey);
@@ -19,7 +19,7 @@ export function getCommuteDayType(
   if (isOff) {
     if (!isWorkDay) return 'holiday';
     if (arrivalType === 'remote') return 'remote';
-    return holidayWorkTypes[dateKey] ?? 'office';
+    return 'office';
   }
 
   if (!isWorkDay) return 'remote';

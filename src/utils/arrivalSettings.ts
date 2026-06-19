@@ -1,6 +1,6 @@
 import { ArrivalColor, ArrivalTypeConfig, CommuteTime, WorkArrivalType } from '../types';
 import { formatTime, parseTime } from './dateUtils';
-import { isNonWorkingDay, isWeekendDate } from './japaneseHolidays';
+import { isNonWorkingDay } from './japaneseHolidays';
 import { isValidCommutePair, normalizeTimeString } from './workDuration';
 
 export const ARRIVAL_COLOR_HEX: Record<ArrivalColor, string> = {
@@ -42,26 +42,8 @@ export const DEFAULT_ARRIVAL_CONFIGS: Record<WorkArrivalType, ArrivalTypeConfig>
 
 export const WORK_HOURS_PER_DAY = 8;
 
-/** 토·일·공휴일 출근일 기본 출퇴근 시각 */
-export const HOLIDAY_WORK_COMMUTE_TIMES: CommuteTime = {
-  clockIn: '08:40',
-  clockOut: '17:40',
-};
-
 export function isHolidayWorkDay(dateKey: string, workDays: string[]): boolean {
   return isNonWorkingDay(dateKey) && workDays.includes(dateKey);
-}
-
-export function isWeekendNormalWorkDay(
-  dateKey: string,
-  workDays: string[],
-  workDayTypes: Record<string, WorkArrivalType>
-): boolean {
-  return (
-    isWeekendDate(dateKey) &&
-    workDays.includes(dateKey) &&
-    getArrivalTypeForDate(dateKey, workDays, workDayTypes) === 'normal'
-  );
 }
 
 export function getArrivalColorHex(color: ArrivalColor): string {
@@ -159,36 +141,21 @@ export function getEffectiveCommuteTimes(
   const savedOut = commute?.clockOut?.trim() ?? '';
 
   if (isValidCommutePair(savedIn, savedOut)) {
-    const clockIn = normalizeTimeString(savedIn)!;
-    let clockOut = normalizeTimeString(savedOut)!;
-    if (
-      isWeekendNormalWorkDay(dateKey, workDays, workDayTypes) &&
-      clockIn === HOLIDAY_WORK_COMMUTE_TIMES.clockIn &&
-      clockOut === clockInToClockOut(HOLIDAY_WORK_COMMUTE_TIMES.clockIn)
-    ) {
-      clockOut = HOLIDAY_WORK_COMMUTE_TIMES.clockOut;
-    }
-    return { clockIn, clockOut };
+    return {
+      clockIn: normalizeTimeString(savedIn)!,
+      clockOut: normalizeTimeString(savedOut)!,
+    };
   }
 
   if (arrivalType === 'vacation') return null;
 
   if (savedIn && normalizeTimeString(savedIn)) {
     const normalizedIn = normalizeTimeString(savedIn)!;
-    if (isHolidayWorkDay(dateKey, workDays)) {
-      const normalizedOut =
-        savedOut && normalizeTimeString(savedOut)
-          ? normalizeTimeString(savedOut)!
-          : HOLIDAY_WORK_COMMUTE_TIMES.clockOut;
-      if (isValidCommutePair(normalizedIn, normalizedOut)) {
-        return { clockIn: normalizedIn, clockOut: normalizedOut };
-      }
-    }
     const derived = configToCommuteTimes({
       ...arrivalConfigs[arrivalType],
       clockIn: normalizedIn,
     });
-    if (isValidCommutePair(savedIn, derived.clockOut)) {
+    if (isValidCommutePair(normalizedIn, derived.clockOut)) {
       return {
         clockIn: normalizedIn,
         clockOut: derived.clockOut,
@@ -197,12 +164,6 @@ export function getEffectiveCommuteTimes(
   }
 
   if (workDays.includes(dateKey) || savedIn || savedOut) {
-    if (isWeekendNormalWorkDay(dateKey, workDays, workDayTypes)) {
-      return { ...HOLIDAY_WORK_COMMUTE_TIMES };
-    }
-    if (isHolidayWorkDay(dateKey, workDays)) {
-      return { ...HOLIDAY_WORK_COMMUTE_TIMES };
-    }
     const fromConfig = configToCommuteTimes(arrivalConfigs[arrivalType]);
     if (isValidCommutePair(fromConfig.clockIn, fromConfig.clockOut)) {
       return fromConfig;
