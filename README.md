@@ -227,7 +227,7 @@ Choose **Japanese · Chinese · Korean · English** (in that order). All screens
 - Tap the full-width **Save** button at the bottom to apply
 
 #### 6-3. Break Time Settings
-- Card: **Break Time (Lunch, Dinner)** under category **Break Time Settings**
+- Card: **Break Time (Morning, Lunch, Dinner)** under category **Break Time Settings**
 - **Morning break** (excluded from work hours) — default **1 hour**; deducted only when clock-in is **before 08:00**
 - **Lunch break** (excluded from work hours) — default **1 hour**; **not** applied on vacation days
 - **Dinner break** (excluded from work hours) — default **0 hours**

@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Capture manual screenshots for a given language (ja|zh|ko|en).
 # Usage: bash scripts/capture-manual-screenshots.sh ko
+#        bash scripts/capture-manual-screenshots.sh ko settings
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 source "$ROOT/scripts/env.sh"
 
 LANG_CODE="${1:-zh}"
+MODE="${2:-all}"
 OUT_DIR="$ROOT/docs/images/$LANG_CODE"
 PACKAGE="com.commuteapp"
 ACTIVITY="${PACKAGE}/.MainActivity"
@@ -184,6 +186,12 @@ install_app
 reset_app
 launch_app
 set_language
+
+if [[ "$MODE" == "settings" ]]; then
+  capture_tab 5 screen-settings.png
+  echo "Done: $OUT_DIR"
+  exit 0
+fi
 
 capture_tab 0 screen-notifications.png
 capture_tab 1 screen-work-date.png
