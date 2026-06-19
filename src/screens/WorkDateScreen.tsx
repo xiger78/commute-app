@@ -17,8 +17,13 @@ export function WorkDateScreen() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [selectedMode, setSelectedMode] = useState<WorkArrivalType>('normal');
   const { data, setWorkDayArrival, clearWorkDay, clearMonthWorkDays } = useWorkDataContext();
-  const { tr, normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival } =
+  const { tr, normalArrival, earlyArrival, lateArrival, remoteArrival, vacationArrival, morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes } =
     useLanguage();
+
+  const breakSettings = useMemo(
+    () => ({ morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes }),
+    [morningBreakMinutes, lunchBreakMinutes, eveningBreakMinutes]
+  );
 
   const monthWorkDays = getWorkDaysInMonth(data.workDays, year, month);
 
@@ -57,7 +62,7 @@ export function WorkDateScreen() {
       return;
     }
     const config = arrivalSettings[selectedMode];
-    await setWorkDayArrival(dateKey, selectedMode, config);
+    await setWorkDayArrival(dateKey, selectedMode, config, breakSettings);
   };
 
   const handleResetMonth = async () => {

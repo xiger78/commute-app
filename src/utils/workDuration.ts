@@ -1,4 +1,5 @@
 import { WorkArrivalType } from '../types';
+import { formatTime } from './dateUtils';
 
 export function normalizeTimeString(time: string): string | null {
   const trimmed = time?.trim() ?? '';
@@ -52,6 +53,22 @@ export function calcBreakMinutesForEntry(
   }
 
   return total;
+}
+
+/** 출근 시각 + 8시간 근무 + 휴계시간 → 퇴근 시각 */
+export function clockInToClockOutWithBreaks(
+  clockIn: string,
+  breakSettings: BreakSettings,
+  arrivalType: WorkArrivalType = 'normal',
+  workHours = 8
+): string {
+  const inMin = timeToMinutes(clockIn);
+  if (inMin === null) return '00:00';
+  const breakMinutes = calcBreakMinutesForEntry(clockIn, arrivalType, breakSettings);
+  const outMin = inMin + workHours * 60 + breakMinutes;
+  const outH = Math.floor(outMin / 60) % 24;
+  const outM = outMin % 60;
+  return formatTime(String(outH), String(outM));
 }
 
 export function calcWorkMinutes(

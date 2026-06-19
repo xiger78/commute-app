@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrivalTypeConfig, HolidayWorkType, WorkArrivalType, WorkData } from '../types';
 import { configToCommuteTimes } from '../utils/arrivalSettings';
+import { BreakSettings } from '../utils/workDuration';
 import { getMonthDateKeys } from '../utils/dateUtils';
 import { loadWorkData, saveWorkData } from '../utils/storage';
 
@@ -43,14 +44,19 @@ export function useWorkData() {
   );
 
   const setWorkDayArrival = useCallback(
-    async (dateKey: string, arrivalType: WorkArrivalType, config: ArrivalTypeConfig) => {
+    async (
+      dateKey: string,
+      arrivalType: WorkArrivalType,
+      config: ArrivalTypeConfig,
+      breakSettings: BreakSettings
+    ) => {
       const workDays = data.workDays.includes(dateKey)
         ? data.workDays
         : [...data.workDays, dateKey].sort();
       const times =
         arrivalType === 'vacation'
           ? { clockIn: '', clockOut: '' }
-          : configToCommuteTimes(config);
+          : configToCommuteTimes(config, arrivalType, breakSettings);
       await persist({
         ...data,
         workDays,

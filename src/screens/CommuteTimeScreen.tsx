@@ -224,7 +224,8 @@ export function CommuteTimeScreen() {
       data.commuteTimes[dateKey],
       data.workDays,
       data.workDayTypes,
-      arrivalConfigs
+      arrivalConfigs,
+      breakSettings
     );
     if (effective) return draftFromCommuteTime(effective);
     return draftFromCommuteTime(data.commuteTimes[dateKey]);
@@ -351,7 +352,8 @@ export function CommuteTimeScreen() {
         merged[dateKey],
         data.workDays,
         data.workDayTypes,
-        arrivalConfigs
+        arrivalConfigs,
+        breakSettings
       );
       const raw = merged[dateKey];
       if (!effective && !memo && !raw?.clockIn && !raw?.clockOut) return null;

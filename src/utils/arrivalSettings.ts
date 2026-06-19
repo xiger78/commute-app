@@ -1,7 +1,7 @@
 import { ArrivalColor, ArrivalTypeConfig, CommuteTime, WorkArrivalType } from '../types';
 import { formatTime, parseTime } from './dateUtils';
 import { isNonWorkingDay } from './japaneseHolidays';
-import { isValidCommutePair, normalizeTimeString } from './workDuration';
+import { isValidCommutePair, normalizeTimeString, BreakSettings, clockInToClockOutWithBreaks } from './workDuration';
 
 export const ARRIVAL_COLOR_HEX: Record<ArrivalColor, string> = {
   green: '#A5D6A7',
@@ -60,12 +60,21 @@ export function clockInToClockOut(clockIn: string, workHours = WORK_HOURS_PER_DA
   return formatTime(String(outH), String(outM));
 }
 
-export function configToCommuteTimes(config: ArrivalTypeConfig): {
+export function configToCommuteTimes(
+  config: ArrivalTypeConfig,
+  arrivalType: WorkArrivalType = 'normal',
+  breakSettings?: BreakSettings
+): {
   clockIn: string;
   clockOut: string;
 } {
   const clockIn = config.clockIn || '00:00';
-  const clockOut = config.clockOut?.trim() || clockInToClockOut(clockIn);
+  const explicitOut = config.clockOut?.trim();
+  const clockOut =
+    explicitOut ||
+    (breakSettings
+      ? clockInToClockOutWithBreaks(clockIn, breakSettings, arrivalType, WORK_HOURS_PER_DAY)
+      : clockInToClockOut(clockIn));
   return { clockIn, clockOut };
 }
 
@@ -134,7 +143,8 @@ export function getEffectiveCommuteTimes(
   commute: CommuteTime | undefined,
   workDays: string[],
   workDayTypes: Record<string, WorkArrivalType>,
-  arrivalConfigs: Record<WorkArrivalType, ArrivalTypeConfig>
+  arrivalConfigs: Record<WorkArrivalType, ArrivalTypeConfig>,
+  breakSettings: BreakSettings
 ): CommuteTime | null {
   const arrivalType = getArrivalTypeForDate(dateKey, workDays, workDayTypes);
   const savedIn = commute?.clockIn?.trim() ?? '';
@@ -151,10 +161,14 @@ export function getEffectiveCommuteTimes(
 
   if (savedIn && normalizeTimeString(savedIn)) {
     const normalizedIn = normalizeTimeString(savedIn)!;
-    const derived = configToCommuteTimes({
-      ...arrivalConfigs[arrivalType],
-      clockIn: normalizedIn,
-    });
+    const derived = configToCommuteTimes(
+      {
+        ...arrivalConfigs[arrivalType],
+        clockIn: normalizedIn,
+      },
+      arrivalType,
+      breakSettings
+    );
     if (isValidCommutePair(normalizedIn, derived.clockOut)) {
       return {
         clockIn: normalizedIn,
@@ -164,7 +178,7 @@ export function getEffectiveCommuteTimes(
   }
 
   if (workDays.includes(dateKey) || savedIn || savedOut) {
-    const fromConfig = configToCommuteTimes(arrivalConfigs[arrivalType]);
+    const fromConfig = configToCommuteTimes(arrivalConfigs[arrivalType], arrivalType, breakSettings);
     if (isValidCommutePair(fromConfig.clockIn, fromConfig.clockOut)) {
       return fromConfig;
     }

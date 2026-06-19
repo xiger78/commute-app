@@ -72,7 +72,8 @@ export function AttendanceHistoryScreen() {
         data.commuteTimes[dateKey],
         data.workDays,
         data.workDayTypes,
-        arrivalConfigs
+        arrivalConfigs,
+        breakSettings
       );
       const clockIn = effective?.clockIn ?? '--:--';
       const clockOut = effective?.clockOut ?? '--:--';

@@ -82,7 +82,8 @@ export function generateAttendanceCsv(
       data.commuteTimes[dateKey],
       data.workDays,
       data.workDayTypes,
-      arrivalConfigs
+      arrivalConfigs,
+      breakSettings
     );
     const clockIn = effective?.clockIn ?? data.commuteTimes[dateKey]?.clockIn ?? '';
     const clockOut = effective?.clockOut ?? data.commuteTimes[dateKey]?.clockOut ?? '';
