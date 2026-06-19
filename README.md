@@ -4,7 +4,7 @@
 **Version:** 1.0.0  
 **Package ID:** `com.commuteapp`
 
-A React Native mobile application for managing office attendance dates, commute times, Google Calendar integration, attendance history, and settings (multi-language, CSV export, email).
+A React Native mobile application for managing office attendance dates and types, commute times, attendance history, Japanese holidays, and settings (multi-language, arrival types, break times, CSV export, email).
 
 ---
 
@@ -46,14 +46,6 @@ A React Native mobile application for managing office attendance dates, commute 
 | Package | Version | Purpose |
 |---------|---------|---------|
 | @react-native-async-storage/async-storage | 1.23.1 | Local data persistence |
-
-### Google Calendar Integration
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| expo-auth-session | ~5.5.2 | OAuth authentication |
-| expo-web-browser | ~13.0.3 | OAuth browser flow |
-| expo-crypto | ~13.0.2 | Cryptographic utilities |
 
 ### Settings Features (Export & Email)
 
@@ -127,56 +119,66 @@ Memo:Release work for blended data update
 
 ---
 
-### 2. Set Work Dates (出勤日指定)
+### 2. Set Work Dates
 
-Select office attendance days on a monthly calendar.
+Select office attendance days and arrival types on a monthly calendar.
 
 **How to use:**
 - Choose **year** and **month** using the same dropdown pickers as Attendance History
-- Tap a date to mark it as an office day (green circle)
+- Select an **arrival type button** (Normal · Early · Late · Remote · Vacation), then tap a date to mark it
+- Marked dates show the **configured color** for that type
 - Double-tap quickly on a marked date to unmark it
 - **Japanese national holidays** are shown with a **red circle** on the calendar
-- Legend at the bottom: green dot = office day, red dot = holiday
+- Tap **Reset** (next to the title) to clear all work dates for the month
+- Legend: five arrival-type colors + red dot = holiday
+
+**Default arrival times (configurable in Settings):**
+| Type | Default clock-in | Default clock-out |
+|------|------------------|-------------------|
+| Normal | 08:40 | clock-in + 8 h |
+| Early | 06:00 | 16:00 |
+| Late | 11:00 | 20:00 |
+| Remote | 08:40 | clock-in + 8 h |
+| Vacation | — | — |
 
 ![Set Work Dates](docs/images/en/screen-work-date.png)
 
 ---
 
-### 3. Commute Times (出退勤時間入力)
+### 3. Commute Times
 
 Enter clock-in and clock-out times for each day of the selected month.
 
 **How to use:**
 - Select **year** and **month** using the same dropdown pickers as Attendance History
-- In the **Bulk Apply** section, enter clock-in / clock-out times and tap **Apply** (full-width button, same width as **Save**)
+- In the **Bulk Apply** section, enter clock-in / clock-out times, then tap **Apply** and **Save** side by side
 - Edit each day individually with compact **HH hours MM minutes** inputs
-- Tap **Reset** (next to the title) to clear all times for the month to **00:00**
-- Tap **Save** to store data and show a preview list below the button
+- Enter special notes in each day's **Memo** field
+- Tap **Reset** (next to the title) to clear all times and memos for the month to **00:00** / empty
+- Tap **Save** to store data and show a preview list below
+
+**Color legend (below Bulk Apply):**
+- **Early · Normal · Late · Remote** — matches arrival-type colors from Settings
 
 **Save preview (same format as Attendance History):**
-- **First line:** `[Work hours:total]` — sum of daily work hours for the month (same decimal format)
-- Each saved row: `YYYY/MM/DD(weekday) HH:MM-HH:MM (work hours)`, center-aligned
-- Work hours = clock-out − clock-in − **lunch + dinner break** (from Settings), shown in parentheses as a decimal (e.g. `9.0` for 9 hours, `9.5` for 9.5 hours)
-- Example:
-```
-[Work hours:160.0]
-2026/06/03(Wed) 09:00-18:00 (8.0)
-2026/06/04(Thu) 09:00-18:00 (8.0)
-```
+- **First line:** `[Work hours:total]` — sum of daily work hours (one decimal place)
+- Each row: `YYYY/MM/DD(weekday) HH:MM-HH:MM (work hours)`, center-aligned
+- Appends `[Memo:text]` when a memo exists
+- Work hours = clock-out − clock-in − **morning, lunch, and dinner breaks** (see Settings), decimal in parentheses (`9.0`, `9.5`)
+- **Vacation** days are excluded from the total
 
 **Day labels and card colors:**
-- Each row shows `YYYY/MM/DD(weekday):type` (e.g. `2026/06/03(Wed):Office`)
-- **Weekday, not marked on calendar** → `:Remote` (blue card)
-- **Weekday, marked as office day** → `:Office` (green card)
-- **Saturday, Sunday, or Japanese holiday, not marked** → `:Holiday` (pink card) — not shown as Remote
-- **Saturday, Sunday, or holiday marked on calendar** → `:Office` by default (green card); tap the date label (▼) to open a popup and switch between **Office** and **Remote**
+- Each row shows `YYYY/MM/DD(weekday):type`
+- Card colors follow **arrival-type colors** from Settings (normal, early, late, remote, vacation)
+- **Weekday, not marked on calendar** → `:Remote`
+- **Saturday, Sunday, or holiday, not marked** → `:Holiday` (gray card)
+- **Saturday, Sunday, or holiday marked on calendar** → `:Office` by default; tap the date label (▼) to switch **Office / Remote**
+- **Holiday work days** default to **08:40–17:40** (editable per day)
 
 **Bulk apply rules:**
-- Applies to eligible **weekdays** in the selected month (both office and remote weekdays)
-- **Excludes Saturdays, Sundays, and Japanese national holidays**, including:
-  - Fixed holidays, Happy Monday holidays, Vernal/Autumnal Equinox days
-  - Substitute holidays (振替休日) and Citizens' holidays (国民の休日)
-- The screen shows the number of eligible days (e.g. `Excludes Sat/Sun & JP holidays · N days`)
+- Applies to **normal and remote** weekdays only (**early, late, and vacation are manual edit only**)
+- **Excludes Saturdays, Sundays, and Japanese national holidays** (fixed holidays, Happy Monday, equinox days, substitute holidays, citizens' holidays)
+- Screen shows eligible day count (e.g. `Excludes Sat/Sun & JP holidays · N days`)
 
 ![Commute Times](docs/images/en/screen-commute-time.png)
 
@@ -198,7 +200,7 @@ View monthly attendance records.
 2026/06/03(Wed) 09:00-18:00 (8.0)
 2026/06/04(Thu) 09:00-18:00 (8.0)
 ```
-- Card colors match Commute Times: green = office, blue = remote, pink = holiday
+- Card colors and type labels match Commute Times (per arrival-type colors)
 
 ![Attendance History](docs/images/en/screen-attendance-history.png)
 
@@ -212,24 +214,29 @@ View Japanese national holidays by year and month.
 
 ---
 
-### 6. Settings (設定)
+### 6. Settings
 
-Display language, arrival types, break time, attendance report (CSV), and email.
+Display language, arrival types, break times, attendance report (CSV), and email.
 
 #### 6-1. Display Language
 Choose **Japanese · Chinese · Korean · English** (in that order). All screens update immediately.
 
-#### 6-2. Break Time Settings (휴계시간 설정)
-- Card: **Break Time (Lunch, Dinner)** under category **Break Time Settings**
-- **Lunch break** (excluded from work hours) — default **1 hour** (`01:00`)
-- **Dinner break** (excluded from work hours) — default **0 hours** (`00:00`)
-- Edit **hour** and **minute** for lunch and dinner independently (HH hours MM minutes)
-- Opening the card loads the last saved values; tap the full-width **Save** button below the dinner field to apply both at once
-- Saved break times are subtracted when calculating work hours on History, save preview, and CSV export
+#### 6-2. Arrival Type, Color & Time
+- **Normal / Early / Late / Remote** — set display color and clock-in time (clock-out auto-calculated; early/late keep fixed clock-out)
+- **Vacation** — display color only (excluded from work-hour totals)
+- Tap the full-width **Save** button at the bottom to apply
 
-#### 6-3. Attendance Report (CSV) (근태장표출력(CSV))
+#### 6-3. Break Time Settings
+- Card: **Break Time (Lunch, Dinner)** under category **Break Time Settings**
+- **Morning break** (excluded from work hours) — default **1 hour**; deducted only when clock-in is **before 08:00**
+- **Lunch break** (excluded from work hours) — default **1 hour**; **not** applied on vacation days
+- **Dinner break** (excluded from work hours) — default **0 hours**
+- Edit hour and minute for each field independently; tap **Save** below to apply all three
+- Saved breaks are subtracted on History, save preview, and CSV export
+
+#### 6-4. Attendance Report (CSV)
 - Select export month
-- Tap the full-width **Export** button to generate and share a CSV file (uses break times from §5-2)
+- Tap the full-width **Export** button to generate and share a CSV file (uses §6-2 arrival types and §6-3 break times)
 
 **CSV format example:**
 ```
@@ -239,7 +246,7 @@ Choose **Japanese · Chinese · Korean · English** (in that order). All screens
 [総勤務時間:160時間00分]
 ```
 
-#### 6-4. Send Email
+#### 6-5. Send Email
 - Enter recipient, subject, and body
 - Attach files (including exported CSV)
 - Tap the full-width **Send Email** button to open the device mail app
@@ -253,21 +260,20 @@ Choose **Japanese · Chinese · Korean · English** (in that order). All screens
 | Item | Description |
 |------|-------------|
 | Menu layout | **Alerts · Dates · Times · History · Holidays · Settings** (6 tabs) |
-| Alerts tab | Shows **memos** as `YYYY/MM/DD(weekday):type(clock-in)` / `Memo:text` |
-| Year Holidays tab | Japanese holidays by year/month with calendar (substitute & citizens' holidays) |
-| Per-day memo | **Memo** field on each date in Commute Times for special notes |
-| Display language | **Japanese · Chinese · Korean · English** (same order in Settings) |
-| Chinese manual | [README_ZH.md](README_ZH.md) with `docs/images/zh/` screen captures |
-| Screen captures | Updated 6 screens × 4 languages (`scripts/capture-manual-screenshots.sh`) |
-| Google tab | Removed (settings, history, and commute features retained) |
-| Default language | **Japanese** on first launch |
-| Arrival types | Normal/Early/Late/Remote/Vacation with configurable colors and clock-in times |
-| Calendar holidays | Japanese holidays shown as **red circles** on work-date calendar |
-| Commute day types | Weekends/holidays show **:Holiday** unless marked; Office/Remote switchable |
-| Work hours | **`[Work hours:total]`** and per-day `(9.0)` format (breaks excluded) |
-| Bulk time entry | Excludes **weekends** and **Japanese holidays** from bulk apply |
-| Reset times | **Reset** on Commute Times clears month times and memos to **00:00** / empty |
-| APK download | Pre-built APK at `dist/出退勤管理-v1.0.0.apk` in the repository |
+| Project rename | `googleCalenderApp` → **CommuteApp** (`commute-app`, `com.commuteapp`) |
+| Work dates | Mark days with **Normal / Early / Late / Remote / Vacation** type buttons and colors |
+| Arrival defaults | Normal 08:40 / Early 06:00–16:00 / Late 11:00–20:00 / Remote 08:40 / Vacation |
+| Bulk apply | **Normal & remote** weekdays only; early/late/vacation manual; **Apply** and **Save** side by side |
+| Holiday work | Default **08:40–17:40** when marking Sat/Sun/holidays on calendar |
+| Color legend | Early · Normal · Late · Remote legend on Commute Times screen |
+| Morning break | New setting — deducted when clock-in before **08:00** (default 1 h) |
+| Break times | Morning, lunch, dinner; lunch skipped on vacation; dinner always deducted |
+| Work hours | **`[Work hours:total]`** and per-day `(9.0)` format on History and save preview |
+| Year Holidays | Japanese holidays by year/month with substitute & citizens' holidays |
+| Languages | **Japanese · Chinese · Korean · English** (default Japanese) |
+| Screen captures | 6 screens × 4 languages updated (`scripts/capture-manual-screenshots.sh`) |
+| Google tab | Removed |
+| APK | Pre-built at `dist/出退勤管理-v1.0.0.apk` |
 
 ---
 
@@ -281,8 +287,7 @@ CommuteApp/
 │   ├── components/            # Banner, calendar, shared UI
 │   ├── context/               # Data & language context
 │   ├── i18n/                  # Translations (ja/zh/ko/en)
-│   ├── utils/                 # Date, storage, CSV, holidays, commute day-type utilities
-│   └── services/              # Google Calendar API
+│   └── utils/                 # Date, storage, CSV, holidays, commute day-type utilities
 ├── docs/images/
 │   ├── ja/                    # Japanese screen captures
 │   ├── zh/                    # Chinese screen captures
