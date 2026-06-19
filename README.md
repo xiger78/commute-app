@@ -115,7 +115,7 @@ Memo:Release work for blended data update
 ```
 - Newest dates appear at the top
 
-![Alerts](docs/images/en/screen-notifications.png)
+![Alerts](docs/images/zh/screen-notifications.png)
 
 ---
 
@@ -141,7 +141,7 @@ Select office attendance days and arrival types on a monthly calendar.
 | Remote | 08:40 | clock-in + 8 h |
 | Vacation | — | — |
 
-![Set Work Dates](docs/images/en/screen-work-date.png)
+![Set Work Dates](docs/images/zh/screen-work-date.png)
 
 ---
 
@@ -180,7 +180,7 @@ Enter clock-in and clock-out times for each day of the selected month.
 - **Excludes Saturdays, Sundays, and Japanese national holidays** (fixed holidays, Happy Monday, equinox days, substitute holidays, citizens' holidays)
 - Screen shows eligible day count (e.g. `Excludes Sat/Sun & JP holidays · N days`)
 
-![Commute Times](docs/images/en/screen-commute-time.png)
+![Commute Times](docs/images/zh/screen-commute-time.png)
 
 ---
 
@@ -202,7 +202,7 @@ View monthly attendance records.
 ```
 - Card colors and type labels match Commute Times (per arrival-type colors)
 
-![Attendance History](docs/images/en/screen-attendance-history.png)
+![Attendance History](docs/images/zh/screen-attendance-history.png)
 
 ---
 
@@ -210,7 +210,7 @@ View monthly attendance records.
 
 View Japanese national holidays by year and month.
 
-![Year Holidays](docs/images/en/screen-year-holidays.png)
+![Year Holidays](docs/images/zh/screen-year-holidays.png)
 
 ---
 
@@ -251,7 +251,7 @@ Choose **Japanese · Chinese · Korean · English** (in that order). All screens
 - Attach files (including exported CSV)
 - Tap the full-width **Send Email** button to open the device mail app
 
-![Settings](docs/images/en/screen-settings.png)
+![Settings](docs/images/zh/screen-settings.png)
 
 ---
 

@@ -115,7 +115,7 @@ dist/出退勤管理-v1.0.0.apk
 ```
 - 최신 날짜가 위에 표시
 
-![알림](docs/images/ko/screen-notifications.png)
+![알림](docs/images/en/screen-notifications.png)
 
 ---
 
@@ -141,7 +141,7 @@ dist/出退勤管理-v1.0.0.apk
 | 재택 | 08:40 | 출근 + 8시간 |
 | 휴가 | — | — |
 
-![출근 날짜 지정](docs/images/ko/screen-work-date.png)
+![출근 날짜 지정](docs/images/en/screen-work-date.png)
 
 ---
 
@@ -180,7 +180,7 @@ dist/出退勤管理-v1.0.0.apk
 - **토·일·일본 공휴일(祝日) 제외** — 고정 공휴일, 해피 먼데이, 춘분·추분, 대체 공휴일, 국민의 휴일
 - 화면에 `토·일 및 일본 공휴일 제외 · 적용 대상 N일` 안내
 
-![출퇴근 시각 입력](docs/images/ko/screen-commute-time.png)
+![출퇴근 시각 입력](docs/images/en/screen-commute-time.png)
 
 ---
 
@@ -202,7 +202,7 @@ dist/出退勤管理-v1.0.0.apk
 ```
 - 카드 색상·유형 표시는 출퇴근 시각 화면과 동일 (출근 유형별 색상)
 
-![출근 이력 확인](docs/images/ko/screen-attendance-history.png)
+![출근 이력 확인](docs/images/en/screen-attendance-history.png)
 
 ---
 
@@ -217,7 +217,7 @@ dist/出退勤管理-v1.0.0.apk
 - 월까지 선택 시 해당 월 달력 + 공휴일 표시
 - 대체휴일·국민의 휴일 구분 표시
 
-![올해 휴일](docs/images/ko/screen-year-holidays.png)
+![올해 휴일](docs/images/en/screen-year-holidays.png)
 
 ---
 
@@ -258,7 +258,7 @@ dist/出退勤管理-v1.0.0.apk
 - 파일 첨부 (출력한 CSV도 자동 첨부 가능)
 - **메일 보내기** 버튼(전체 폭)으로 기기 메일 앱 실행
 
-![설정](docs/images/ko/screen-settings.png)
+![설정](docs/images/en/screen-settings.png)
 
 ---
 

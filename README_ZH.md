@@ -81,7 +81,7 @@ dist/出退勤管理-v1.0.0.apk
 - 按日期从新到旧排序
 - 无备忘时显示「没有可显示的备忘。」
 
-![通知](docs/images/zh/screen-notifications.png)
+![通知](docs/images/ko/screen-notifications.png)
 
 ---
 
@@ -107,7 +107,7 @@ dist/出退勤管理-v1.0.0.apk
 | 居家 | 08:40 | 上班 + 8 小时 |
 | 休假 | — | — |
 
-![日期指定](docs/images/zh/screen-work-date.png)
+![日期指定](docs/images/ko/screen-work-date.png)
 
 ---
 
@@ -146,7 +146,7 @@ dist/出退勤管理-v1.0.0.apk
 - **排除周六、周日及日本节假日**（含补休、国民休假日）
 - 画面显示 `排除周六日及日本节假日 · 适用对象 N天`
 
-![通勤时间输入](docs/images/zh/screen-commute-time.png)
+![通勤时间输入](docs/images/ko/screen-commute-time.png)
 
 ---
 
@@ -161,7 +161,7 @@ dist/出退勤管理-v1.0.0.apk
 - 各行: `YYYY/MM/DD(星期) HH:MM-HH:MM (工作时间)`，**居中**
 - 卡片颜色与类型显示与通勤时间画面相同（按出勤类型着色）
 
-![履历确认](docs/images/zh/screen-attendance-history.png)
+![履历确认](docs/images/ko/screen-attendance-history.png)
 
 ---
 
@@ -177,7 +177,7 @@ dist/出退勤管理-v1.0.0.apk
 - **年份 + 月份** → 显示该月日历（节假日标红）及当月节假日列表
 - **补休** 显示为「补休」，**国民休假日** 显示为「国民休假日」
 
-![今年节假日](docs/images/zh/screen-year-holidays.png)
+![今年节假日](docs/images/ko/screen-year-holidays.png)
 
 ---
 
@@ -208,7 +208,7 @@ dist/出退勤管理-v1.0.0.apk
 - 可附加文件（含导出的 CSV）
 - 点击 **发送邮件** 打开设备邮件应用
 
-![设置](docs/images/zh/screen-settings.png)
+![设置](docs/images/ko/screen-settings.png)
 
 ---
 
