@@ -101,6 +101,7 @@ function DayTimeRow({
   memo,
   onUpdatePart,
   onMemoChange,
+  onSave,
   tr,
   weekdays,
 }: {
@@ -111,6 +112,7 @@ function DayTimeRow({
   memo: string;
   onUpdatePart: (dateKey: string, field: keyof DayTimeDraft, value: string) => void;
   onMemoChange: (dateKey: string, value: string) => void;
+  onSave: (dateKey: string) => void;
   tr: (key: TranslationKey, params?: Record<string, string | number>) => string;
   weekdays: string[];
 }) {
@@ -147,6 +149,7 @@ function DayTimeRow({
           textAlignVertical="top"
         />
       </View>
+      <Button title={tr('saveDay')} onPress={() => onSave(dateKey)} variant="success" fullWidth />
     </View>
   );
 }
@@ -326,6 +329,38 @@ export function CommuteTimeScreen() {
     await setDayMemos(nextMemos);
   };
 
+  const handleSaveDay = async (dateKey: string) => {
+    const draft = getDraftForDate(dateKey);
+    const merged = { ...data.commuteTimes, [dateKey]: draftToCommuteTime(draft) };
+
+    const mergedMemos = { ...data.dayMemos };
+    const memo = getMemoForDate(dateKey).trim();
+    if (memo) {
+      mergedMemos[dateKey] = memo;
+    } else {
+      delete mergedMemos[dateKey];
+    }
+
+    await setCommuteTimes(merged);
+    await setDayMemos(mergedMemos);
+
+    setDraftParts((prev) => {
+      const next = { ...prev };
+      delete next[dateKey];
+      return next;
+    });
+    setMemoDrafts((prev) => {
+      const next = { ...prev };
+      delete next[dateKey];
+      return next;
+    });
+
+    Alert.alert(
+      tr('alertSaved'),
+      tr('alertDaySaved', { date: formatSlashDateWithWeekday(dateKey, weekdays) })
+    );
+  };
+
   const handleSave = async () => {
     const merged = { ...data.commuteTimes };
     Object.entries(draftParts).forEach(([dateKey, parts]) => {
@@ -493,6 +528,7 @@ export function CommuteTimeScreen() {
               memo={getMemoForDate(dateKey)}
               onUpdatePart={updateDraftPart}
               onMemoChange={updateMemo}
+              onSave={handleSaveDay}
               tr={tr}
               weekdays={weekdays}
             />
