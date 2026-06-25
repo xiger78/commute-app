@@ -1,4 +1,5 @@
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
@@ -14,6 +15,25 @@ import { HolidayScreen } from './src/screens/HolidayScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 
 const Tab = createMaterialTopTabNavigator();
+
+function AppContent() {
+  const { loading } = useLanguage();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1565C0' }}>
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      <AppTabs />
+    </NavigationContainer>
+  );
+}
 
 function AppTabs() {
   const { language, tr } = useLanguage();
@@ -42,10 +62,7 @@ export default function App() {
     <SafeAreaProvider>
       <LanguageProvider>
         <WorkDataProvider>
-          <NavigationContainer>
-            <StatusBar style="dark" />
-            <AppTabs />
-          </NavigationContainer>
+          <AppContent />
         </WorkDataProvider>
       </LanguageProvider>
     </SafeAreaProvider>

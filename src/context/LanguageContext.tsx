@@ -8,6 +8,7 @@ import {
   SETTINGS_STORAGE_KEY,
 } from '../i18n/types';
 import { DEFAULT_ARRIVAL_CONFIGS } from '../utils/arrivalSettings';
+import { getSystemLanguage } from '../i18n/locale';
 import { t, TranslationKey } from '../i18n/translations';
 
 function mergeSettings(parsed: Partial<AppSettings>): AppSettings {
@@ -69,7 +70,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem(SETTINGS_STORAGE_KEY).then((raw) => {
+    AsyncStorage.getItem(SETTINGS_STORAGE_KEY).then(async (raw) => {
       if (raw) {
         try {
           const parsed = JSON.parse(raw) as Partial<AppSettings>;
@@ -77,6 +78,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         } catch {
           /* use defaults */
         }
+      } else {
+        const initial = mergeSettings({ language: getSystemLanguage() });
+        setSettings(initial);
+        await AsyncStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initial));
       }
       setLoading(false);
     });
