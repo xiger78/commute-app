@@ -159,8 +159,8 @@ export function getEffectiveCommuteTimes(
 
   if (arrivalType === 'vacation') return null;
 
-  if (savedIn && normalizeTimeString(savedIn)) {
-    const normalizedIn = normalizeTimeString(savedIn)!;
+  const normalizedIn = savedIn ? normalizeTimeString(savedIn) : null;
+  if (normalizedIn && normalizedIn !== '00:00') {
     const derived = configToCommuteTimes(
       {
         ...arrivalConfigs[arrivalType],
@@ -177,7 +177,10 @@ export function getEffectiveCommuteTimes(
     }
   }
 
-  if (workDays.includes(dateKey) || savedIn || savedOut) {
+  const shouldUseConfigDefaults =
+    workDays.includes(dateKey) || Boolean(savedIn || savedOut) || arrivalType === 'remote';
+
+  if (shouldUseConfigDefaults) {
     const fromConfig = configToCommuteTimes(arrivalConfigs[arrivalType], arrivalType, breakSettings);
     if (isValidCommutePair(fromConfig.clockIn, fromConfig.clockOut)) {
       return fromConfig;
